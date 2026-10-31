@@ -18,9 +18,9 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: OWNER_EMAIL
-        value: owner@example.com
+        sync: false
       - key: INITIAL_ADMIN_EMAIL
-        value: admin@example.com
+        sync: false
 
 databases:
   - name: visibilityforge-db

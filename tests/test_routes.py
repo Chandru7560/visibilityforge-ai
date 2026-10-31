@@ -5,7 +5,7 @@ from sqlalchemy.exc import OperationalError
 
 from app import _normalize_database_url, create_app
 from app.routes import health as health_module
-from app.config import ProductionConfig, TestingConfig
+from app.config import DevelopmentConfig, ProductionConfig, TestingConfig
 
 
 def test_home_page_returns_html(client):
@@ -15,6 +15,19 @@ def test_home_page_returns_html(client):
     assert response.mimetype == "text/html"
     assert b"VisibilityForge AI" in response.data
     assert b"Everywhere people search." in response.data
+
+
+def test_development_login_page_generates_csrf_token_without_configured_secret():
+    class DevelopmentWithoutSecret(DevelopmentConfig):
+        SECRET_KEY = None
+        SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
+    app = create_app(DevelopmentWithoutSecret)
+    response = app.test_client().get("/auth/login")
+
+    assert app.config["SECRET_KEY"]
+    assert response.status_code == 200
+    assert b'name="csrf_token"' in response.data
 
 
 def test_health_endpoint_returns_small_json_response(client):

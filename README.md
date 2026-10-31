@@ -60,6 +60,8 @@ Generate a local secret key and copy the output into `SECRET_KEY` in `.env`:
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
+For development only, if `SECRET_KEY` is unset, the application generates a temporary random key so CSRF-protected forms such as sign-in work locally. Set a stable key in `.env` if you need sessions to survive application restarts. Production still requires an explicitly configured secret.
+
 The default development configuration uses a local SQLite database at `instance/visibilityforge-dev.db`. To use PostgreSQL locally, set `DATABASE_URL` in `.env` to your PostgreSQL connection URL. Set `OWNER_EMAIL` and `INITIAL_ADMIN_EMAIL` to the intended workspace contact and administrator addresses; the defaults are placeholders (`owner@example.com` and `admin@example.com`). Choose a long, unique `INITIAL_ADMIN_PASSWORD` locally. Never commit `.env` or share its contents. The application loads `.env` automatically when run through Flask or `python run.py`.
 
 ## Run the application

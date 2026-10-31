@@ -75,6 +75,8 @@ def create_app(config_object=None) -> Flask:
             ) from exc
 
     app.config.from_object(config_object)
+    if app.config.get("APP_ENV") == "development" and not app.config.get("SECRET_KEY"):
+        app.config["SECRET_KEY"] = secrets.token_hex(32)
     if any(
         app.config.get(name, 0) < 1
         for name in (

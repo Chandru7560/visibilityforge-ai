@@ -70,6 +70,8 @@ def test_public_demo_does_not_expose_workspace_data(client, app):
     assert demo.status_code == 200
     assert b"PUBLIC, READ-ONLY PREVIEW" in demo.data
     assert b"Illustrative preview" in demo.data
+    assert b"controls preload=\"metadata\"" in demo.data
+    assert b"visibilityforge-product-walkthrough-public.mp4" in demo.data
     assert b"Private workspace question marker" not in demo.data
     assert b"private-owner@example.com" not in demo.data
     assert b"private-contact@example.com" not in demo.data

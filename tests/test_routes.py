@@ -103,6 +103,9 @@ def test_production_uses_postgresql_and_secure_session_cookies(monkeypatch):
     assert app.config["SESSION_COOKIE_HTTPONLY"] is True
     response = app.test_client().get("/health")
     assert response.headers["Strict-Transport-Security"] == "max-age=31536000"
+    assert "media-src 'self' https://github.com" in response.headers[
+        "Content-Security-Policy"
+    ]
 
 
 def test_testing_configuration_keeps_isolated_sqlite_database():

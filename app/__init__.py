@@ -147,6 +147,7 @@ def create_app(config_object=None) -> Flask:
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data:",
                     "font-src 'self' data: https://cdn.jsdelivr.net",
+                    "media-src 'self' https://github.com https://objects.githubusercontent.com https://release-assets.githubusercontent.com https://github-releases.githubusercontent.com",
                     "connect-src 'self'",
                 )
             ),

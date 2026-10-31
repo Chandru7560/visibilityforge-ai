@@ -77,6 +77,8 @@ Open <http://127.0.0.1:5000>. The health check is at <http://127.0.0.1:5000/heal
 
 Open <http://127.0.0.1:5000/demo> to preview the product without an account. The deployed demo is <https://visibilityforge-ai.onrender.com/demo>. The page is static, contains only illustrative descriptions, and does not query the database or expose saved user records. It does not collect data from search engines or AI platforms. The database-backed dashboard and every research, audit, content, citation, and reporting workflow remain protected by authentication.
 
+The public demo includes a 2:58 product walkthrough video at [the public GitHub release](https://github.com/Chandru7560/visibilityforge-ai/releases/tag/product-walkthrough-2026-10-31). The published video is a compressed copy with the account email blurred; the original local recording is unchanged.
+
 ## Database setup and initial administrator
 
 Apply the committed schema migration before signing in:

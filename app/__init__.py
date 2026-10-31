@@ -186,26 +186,24 @@ def create_app(config_object=None) -> Flask:
             )
         if User.query.filter_by(email=email.strip().lower()).first():
             raise click.ClickException("An account already exists for that email.")
-        admin = User(
-            email=email,
-            full_name="VisibilityForge administrator",
-            contact_email=app.config["OWNER_EMAIL"],
-        )
-        try:
-            admin.set_password(password)
-        except ValueError as error:
-            raise click.ClickException(str(error)) from error
-        db.session.add(admin)
-        db.session.flush()
-        db.session.add(
-            ActivityLog(
-                user_id=admin.id,
-                action="Administrator account created",
-                entity_type="user",
-                entity_id=admin.id,
+        admin = _create_admin_account(email, password, app.config["OWNER_EMAIL"])
+        click.echo(f"Administrator account created for {admin.email}.")
+
+    @app.cli.command("bootstrap-admin")
+    def bootstrap_admin() -> None:
+        """Create the first admin once when deployment credentials are configured."""
+        email = app.config.get("INITIAL_ADMIN_EMAIL")
+        password = app.config.get("INITIAL_ADMIN_PASSWORD")
+        if email and User.query.filter_by(email=email.strip().lower()).first():
+            click.echo("Initial admin bootstrap skipped; the account already exists.")
+            return
+        if not email or not password:
+            click.echo(
+                "Initial admin bootstrap skipped; "
+                "INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD are required."
             )
-        )
-        db.session.commit()
+            return
+        admin = _create_admin_account(email, password, app.config["OWNER_EMAIL"])
         click.echo(f"Administrator account created for {admin.email}.")
 
     @app.errorhandler(404)
@@ -228,3 +226,27 @@ def create_app(config_object=None) -> Flask:
 
     logging.getLogger(__name__).info("VisibilityForge AI application initialized")
     return app
+
+
+def _create_admin_account(email: str, password: str, contact_email: str) -> User:
+    admin = User(
+        email=email,
+        full_name="VisibilityForge administrator",
+        contact_email=contact_email,
+    )
+    try:
+        admin.set_password(password)
+    except ValueError as error:
+        raise click.ClickException(str(error)) from error
+    db.session.add(admin)
+    db.session.flush()
+    db.session.add(
+        ActivityLog(
+            user_id=admin.id,
+            action="Administrator account created",
+            entity_type="user",
+            entity_id=admin.id,
+        )
+    )
+    db.session.commit()
+    return admin

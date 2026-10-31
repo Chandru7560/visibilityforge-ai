@@ -71,6 +71,40 @@ def test_admin_bootstrap_is_environment_configured_and_one_time(app):
     assert "An account already exists" in repeated.output
 
 
+def test_deployment_admin_bootstrap_skips_without_password(app):
+    app.config["INITIAL_ADMIN_EMAIL"] = "owner@example.com"
+    app.config["INITIAL_ADMIN_PASSWORD"] = None
+
+    result = app.test_cli_runner().invoke(args=["bootstrap-admin"])
+
+    assert result.exit_code == 0
+    assert "bootstrap skipped" in result.output
+    with app.app_context():
+        assert User.query.filter_by(email="owner@example.com").first() is None
+
+
+def test_deployment_admin_bootstrap_creates_once_and_never_resets_password(app):
+    app.config["INITIAL_ADMIN_EMAIL"] = "owner@example.com"
+    app.config["INITIAL_ADMIN_PASSWORD"] = "a-bootstrap-test-password"
+    runner = app.test_cli_runner()
+
+    created = runner.invoke(args=["bootstrap-admin"])
+
+    assert created.exit_code == 0
+    assert "Administrator account created for owner@example.com." in created.output
+    assert "a-bootstrap-test-password" not in created.output
+
+    app.config["INITIAL_ADMIN_PASSWORD"] = "a-different-test-password"
+    repeated = runner.invoke(args=["bootstrap-admin"])
+
+    assert repeated.exit_code == 0
+    assert "account already exists" in repeated.output
+    with app.app_context():
+        admin = User.query.filter_by(email="owner@example.com").one()
+        assert admin.check_password("a-bootstrap-test-password")
+        assert not admin.check_password("a-different-test-password")
+
+
 def test_login_logout_and_csrf_protection(client, app):
     with app.app_context():
         create_user()

@@ -85,7 +85,7 @@ Create the initial account from the environment variables in `.env`:
 flask --app run.py create-admin
 ```
 
-There is no public registration route. The initial-admin command requires `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD`, hashes the password, and refuses to replace an existing account. Sign in at <http://127.0.0.1:5000/auth/login>, then open the protected dashboard at <http://127.0.0.1:5000/dashboard/>. The configured owner email is a contact address only; no email provider or email delivery is configured.
+There is no public registration route. The `create-admin` command requires `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD`, hashes the password, and refuses to replace an existing account. Sign in at <http://127.0.0.1:5000/auth/login>, then open the protected dashboard at <http://127.0.0.1:5000/dashboard/>. The configured owner email is a contact address only; no email provider or email delivery is configured.
 
 You can also use Flask's development server:
 
@@ -245,8 +245,8 @@ The committed Blueprint defines the Flask web service, a Render PostgreSQL datab
 1. Push the code to a GitHub repository using the instructions below.
 2. In Render, choose **New → Blueprint**, connect the GitHub repository, and review `render.yaml`. Ensure the web service and database are in a compatible region; use the database's internal connection string.
 3. Before first account creation, set `INITIAL_ADMIN_EMAIL` to the intended administrator address and configure a strong `INITIAL_ADMIN_PASSWORD` as a secret in the Render service environment; verify the generated `SECRET_KEY` and PostgreSQL `DATABASE_URL`. The committed email values are placeholders. Do not put credentials in `render.yaml`, GitHub, or logs.
-4. Create the Blueprint/deploy. Render builds from `requirements.txt`; the start command runs `flask --app run.py db upgrade` and then Gunicorn. Check the deploy logs and open `/health`.
-5. From a Render shell or another trusted environment with the production variables and database access, run `flask --app run.py create-admin` once. Remove `INITIAL_ADMIN_PASSWORD` from the service environment after creation. No public registration or email delivery is implemented.
+4. Create the Blueprint/deploy. Render builds from `requirements.txt`; the start command applies migrations, runs the idempotent `bootstrap-admin` command, and then starts Gunicorn. The bootstrap creates an account only when the configured email is absent and a password is set; it never changes an existing account. Check the deploy logs and open `/health`.
+5. After the first administrator has been created, remove `INITIAL_ADMIN_PASSWORD` from the Render service environment. The bootstrap safely skips an existing administrator on later starts. No public registration or email delivery is implemented.
 6. Confirm the login, dashboards, and database persistence on the public URL; test a new migration in a staging database before production deploys.
 
 For production scaling, move migration execution to a single deployment/release step supported by the selected Render plan before adding multiple instances; do not let every web instance race to migrate the same database. This service has no in-process scheduler.

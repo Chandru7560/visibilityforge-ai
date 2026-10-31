@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Question {{ question.id }} | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <a class="back-link" href="{{ url_for('research.index') }}">← Research hub</a>
+  <section class="research-panel question-detail-panel">
+    <div class="research-header detail-header">
+      <div>
+        <div class="section-kicker">QUESTION #{{ question.id }} · {{ question.market }} · {{ question.language }}</div>
+        <h1>{{ question.question_text }}</h1>
+        <p>{{ question.topic or 'Uncategorized' }} · Created {{ question.created_at.strftime('%b %d, %Y') }}</p>
+      </div>
+      <div class="research-actions">
+        {% if question.is_active %}<a class="btn btn-quiet" href="{{ url_for('research.edit_question', question_id=question.id) }}">Edit</a>{% endif %}
+        {% if question.is_active %}<a class="btn btn-quiet" href="{{ url_for('content.create', question_id=question.id) }}">Create content draft</a><a class="btn btn-quiet" href="{{ url_for('citations.create', question_id=question.id) }}">Plan citation</a>{% endif %}
+        <a class="btn btn-primary-cta" href="{{ url_for('research.new_measurement') }}">Record measurement <span aria-hidden="true">+</span></a>
+        <form method="post" action="{{ url_for('research.archive_question', question_id=question.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="{{ 'archive' if question.is_active else 'restore' }}">
+          <button class="btn btn-quiet" type="submit">{{ 'Archive' if question.is_active else 'Restore' }}</button>
+        </form>
+      </div>
+    </div>
+    <div class="question-facts">
+      <div><span>Source type</span><strong>{{ question.source_type|replace('_', ' ')|title if question.source_type else 'Not recorded' }}</strong></div>
+      <div><span>Verification</span><strong class="state-badge {{ 'state-recorded' if question.verification_status == 'verified' else 'state-pending' }}">{{ question.verification_status|capitalize }}</strong></div>
+      <div class="fact-source"><span>Source reference</span>{% if question.source_url %}<a href="{{ question.source_url }}" target="_blank" rel="noopener noreferrer">{{ question.source_url }} ↗</a>{% else %}<strong>No source URL recorded</strong>{% endif %}</div>
+      <div><span>Archive status</span><strong>{{ 'Active' if question.is_active else 'Archived' }}</strong></div>
+    </div>
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Immutable measurement history</h2><p>Each repeat is a new record; prior observations are never overwritten.</p></div><span class="panel-badge">{{ measurement_count }} RECORDS</span></div>
+    {% if measurements.items %}
+      <div class="measurement-cards">
+        {% for measurement in measurements.items %}
+          <a class="measurement-history-card" href="{{ url_for('research.measurement_detail', measurement_id=measurement.id) }}">
+            <span class="measurement-history-heading"><strong>{{ measurement.engine }}</strong><span>{{ measurement.market }} · {{ measurement.location_setting or 'Location not set' }}</span></span>
+            <span class="measurement-history-meta">{{ measurement.collected_at.strftime('%Y-%m-%d %H:%M UTC') }} · {{ measurement.collection_method|capitalize }} · {{ measurement.collection_status|capitalize }}</span>
+            <span class="measurement-history-answer">{{ measurement.raw_answer }}</span>
+            <span class="state-badge {{ 'state-recorded' if measurement.mention_status == 'mentioned' else 'state-pending' }}">{{ measurement.mention_status|replace('_', ' ')|capitalize if measurement.mention_status else 'Not assessed' }}{% if measurement.google_rank %} · Google rank {{ measurement.google_rank }}{% endif %}</span>
+          </a>
+        {% endfor %}
+      </div>
+      {% if measurements.pages > 1 %}<nav class="pagination-nav" aria-label="Question measurement history pages"><span>Page {{ measurements.page }} of {{ measurements.pages }}</span><div>{% if measurements.has_prev %}<a class="page-link" href="{{ url_for('research.question_detail', question_id=question.id, page=measurements.prev_num) }}">Previous</a>{% endif %}{% if measurements.has_next %}<a class="page-link" href="{{ url_for('research.question_detail', question_id=question.id, page=measurements.next_num) }}">Next</a>{% endif %}</div></nav>{% endif %}
+    {% else %}
+      <div class="research-empty"><span class="empty-chart-icon" aria-hidden="true">⌁</span><strong>No observations saved for this question.</strong><p>Record a manual or imported observation after actually checking a search result or assistant response.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

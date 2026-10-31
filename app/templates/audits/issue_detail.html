@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ issue.title }} | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="audit-workspace">
+  <a class="back-link" href="{{ url_for('audits.detail', run_id=issue.audit_run_id) }}">← Audit report</a>
+  <section class="research-panel audit-issue-detail">
+    <div class="section-kicker">AUDIT FINDING · {{ issue.category|replace('_', ' ')|upper }} · #{{ issue.id }}</div>
+    <div class="audit-issue-heading"><h1>{{ issue.title }}</h1><span class="severity-pill severity-{{ issue.severity }}">{{ issue.severity|capitalize }}</span></div>
+    <p class="field-help">Recorded {{ issue.created_at.strftime('%Y-%m-%d %H:%M UTC') }} · Validation: {{ issue.validation_status|replace('_', ' ')|capitalize }}</p>
+    {% if issue.page_url %}<div class="audit-detail-item"><span>Affected page</span><a href="{{ issue.page_url }}" target="_blank" rel="noopener noreferrer">{{ issue.page_url }}</a></div>{% endif %}
+    <div class="audit-detail-item"><span>Explanation</span><p>{{ issue.description }}</p></div>
+    {% if issue.evidence %}<div class="audit-detail-item"><span>Observed evidence</span><pre class="audit-code">{{ issue.evidence }}</pre></div>{% endif %}
+    {% if issue.recommendation %}<div class="audit-detail-item"><span>Suggested correction</span><p>{{ issue.recommendation }}</p></div>{% endif %}
+    <div class="audit-detail-item"><span>Content integration</span><a class="btn btn-quiet" href="{{ url_for('content.create', issue_id=issue.id) }}">Create a content brief from this recommendation</a></div>
+    {% if issue.code_example %}<div class="audit-detail-item"><span>Example snippet · generated, not externally validated</span><pre class="audit-code"><code>{{ issue.code_example }}</code></pre></div>{% endif %}
+    {% if issue.validation_method %}<div class="audit-detail-item"><span>Validation method</span><p>{{ issue.validation_method }}</p></div>{% endif %}
+    <div class="audit-validation-disclaimer">Generated example code is only a starting point. Use the report's local validator for syntax checks; no external validator or search engine has verified this recommendation.</div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}90-Day Launch Plan | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header">
+    <div><div class="section-kicker">LAUNCH PLANNING · 13 WEEKLY PERIODS</div><h1>90-day growth plan</h1><p>Thirteen consecutive planning weeks span 91 days. Suggested targets are planning inputs, never reported outcomes.</p></div>
+    <div class="research-actions">
+      <a class="btn btn-quiet" href="{{ url_for('reports.export_growth_plan') }}">Export growth-plan.csv</a>
+      <form method="post" action="{{ url_for('reports.initialize_growth_plan') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-primary-cta" type="submit">Create suggested 13-week plan</button></form>
+    </div>
+  </header>
+  <div class="integration-notice" role="note"><strong>Suggested targets are not actual results</strong><span>Suggested task and metric values are editable planning ideas. Budget is unset until entered. Owners are unassigned until you assign them. Record actual outcomes separately after work is completed; task status alone is not evidence of impact.</span></div>
+  <section class="research-panel plan-period-list">
+    {% for week in weeks %}
+    <article class="plan-period-card">
+      <header><div><span class="section-kicker">WEEK {{ week.index }}</span><h2>{{ week.start.strftime('%b %d') }} – {{ week.end.strftime('%b %d, %Y') }}</h2></div><a class="btn btn-quiet" href="{{ url_for('reports.edit_task', week=week.index) }}">Add task</a></header>
+      {% set tasks = tasks_by_week.get(week.start, []) %}
+      {% if tasks %}
+        {% for task in tasks %}
+        <div class="plan-task-card">
+          <div class="plan-task-heading"><strong>{{ task.title }}</strong><span class="state-badge {{ 'state-recorded' if task.status == 'done' else 'state-pending' }}">{{ task.status|replace('_', ' ')|title }}</span></div>
+          <p>{{ task.description or 'No description recorded.' }}</p>
+          <div class="plan-task-meta">
+            <span>Owner: {{ task.owner or 'Unassigned' }}</span>
+            <span>Priority: {{ task.priority|title }}</span>
+            <span>Budget: {% if task.budget_amount is not none %}{{ task.budget_currency }} {{ '%.2f'|format(task.budget_amount) }}{% else %}Not set{% endif %}</span>
+            <span>Tools: {{ task.tools|join(', ') if task.tools else 'Not set' }}</span>
+          </div>
+          {% if task.target_metrics %}<div class="plan-target-box"><strong>{{ 'Suggested target' if task.target_is_suggested else 'Target metric' }}</strong><pre>{{ task.target_metrics|tojson(indent=2) }}</pre></div>{% endif %}
+          {% if task.risks %}<p class="plan-risk"><strong>Risks:</strong> {{ task.risks }}</p>{% endif %}
+          <div class="plan-outcome"><strong>Actual outcome:</strong> {{ task.actual_outcome or 'Not recorded' }}</div>
+          <a class="table-action" href="{{ url_for('reports.edit_task', task_id=task.id) }}">Edit task and progress</a>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="plan-period-empty">No tasks in this period yet. Add a task or initialize the suggested plan.</div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Record measurement | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <a class="back-link" href="{{ url_for('research.index') }}">← Research hub</a>
+  <section class="research-panel form-panel">
+    <div class="section-kicker">REPRODUCIBLE EVIDENCE · MANUAL RECORDING</div>
+    <h1>Record a visibility observation</h1>
+    <p class="form-intro">No external API is configured. This form records only observations you actually made. Saving creates a new immutable measurement; repeat checks never overwrite prior results.</p>
+    <div class="integration-notice"><strong>Manual evidence entry</strong><span>ChatGPT, Gemini, Perplexity, Claude, Copilot, Google Search, and Google AI Overviews are profile labels only. Nothing is fetched or inferred automatically.</span></div>
+    <form method="post" action="{{ url_for('research.create_measurement') }}" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="form-grid measurement-form-grid">
+        {% for field in [form.question_id, form.market, form.location_setting, form.collected_at, form.time_zone, form.engine, form.engine_detail, form.collection_method, form.collection_status, form.error_status, form.query, form.raw_answer, form.mention_status, form.mention_context, form.sentiment, form.cited_urls, form.competitor_names, form.competitor_evidence, form.google_rank, form.featured_snippet, form.ai_overview, form.screenshot_reference, form.visibility_score, form.notes] %}
+          <div class="research-field {% if field.name in ['query', 'raw_answer', 'mention_context', 'cited_urls', 'competitor_names', 'competitor_evidence', 'error_status', 'notes'] %}field-wide{% endif %}">
+            {{ field.label(class="form-label") }}
+            {% if field.name == 'raw_answer' or field.name in ['mention_context', 'cited_urls', 'competitor_names', 'competitor_evidence', 'error_status', 'notes'] %}
+              {{ field(class="form-control auth-input", rows="3") }}
+            {% elif field.type == 'SelectField' %}
+              {{ field(class="form-select auth-input") }}
+            {% else %}
+              {{ field(class="form-control auth-input", type="datetime-local" if field.name == "collected_at" else "number" if field.name == "google_rank" else "number" if field.name == "visibility_score" else "text", min="1" if field.name == "google_rank" else "0" if field.name == "visibility_score" else none, max="100" if field.name == "visibility_score" else none, step="0.1" if field.name == "visibility_score" else "1" if field.name == "google_rank" else none) }}
+            {% endif %}
+            {% if field.description %}<div class="field-help">{{ field.description }}</div>{% endif %}
+            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="evidence-guidance">
+        <strong>Evidence integrity</strong>
+        <span>Use Google rank only when you observed an organic position reliably. Mark answer boxes and AI Overviews as “not assessed” unless checked. Enter cited links from the result itself. Never bypass logins, CAPTCHAs, or platform restrictions.</span>
+      </div>
+      <div class="form-actions">{{ form.submit(class="btn btn-primary-cta") }}<a class="btn btn-quiet" href="{{ url_for('research.measurement_history') }}">Cancel</a></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

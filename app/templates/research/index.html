@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Research Hub | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<div class="research-page">
+  <header class="research-header">
+    <div>
+      <div class="section-kicker">RESEARCH HUB · EVIDENCE FIRST</div>
+      <h1>Research workspace</h1>
+      <p>Collect real creator questions and append-only observations. No search or assistant is queried automatically.</p>
+    </div>
+    <div class="research-actions">
+      <a class="btn btn-quiet" href="{{ url_for('research.import_questions') }}">Import CSV</a>
+      <a class="btn btn-quiet" href="{{ url_for('research.export_questions') }}">Export questions</a>
+      <a class="btn btn-primary-cta" href="{{ url_for('research.create_question') }}">Add question <span aria-hidden="true">+</span></a>
+    </div>
+  </header>
+
+  <section class="research-stats" aria-label="Research data summary">
+    <article class="research-stat"><span>Active questions</span><strong>{{ active_count }}</strong><small>Question records currently in scope</small></article>
+    <article class="research-stat"><span>Verified with source</span><strong>{{ verified_count }} <em>/ {{ active_count }}</em></strong><small>Verified questions must have a source URL</small></article>
+    <article class="research-stat"><span>Brand mention rate</span><strong>{% if metrics.mention_rate is not none %}{{ metrics.mention_rate }}%{% else %}—{% endif %}</strong><small>Assessed sample: {{ metrics.assessed_sample }} / {{ metrics.observation_count }} observations</small></article>
+    <article class="research-stat"><span>Question evidence coverage</span><strong>{% if metrics.evidence_coverage is not none %}{{ metrics.evidence_coverage }}%{% else %}—{% endif %}</strong><small>{{ metrics.evidence_questions }} / {{ metrics.total_questions }} active questions</small></article>
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading">
+      <div><h2>Tracked questions</h2><p>Search, verify, filter, and archive source-backed questions.</p></div>
+      <button class="btn btn-danger-quiet" type="submit" form="questionSelectionForm" data-confirm-archive>Archive selected</button>
+    </div>
+    <form method="get" class="research-filters" aria-label="Filter research questions">
+      <label class="sr-only" for="questionSearch">Search questions</label>
+      <input id="questionSearch" name="q" value="{{ search }}" class="filter-input" type="search" placeholder="Search questions or topics">
+      <label class="sr-only" for="topicFilter">Category</label>
+      <select id="topicFilter" name="topic" class="filter-input"><option value="">All categories</option>{% for category in categories %}<option value="{{ category }}" {% if selected_topic == category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select>
+      <label class="sr-only" for="marketFilter">Market</label>
+      <select id="marketFilter" name="market" class="filter-input"><option value="">All markets</option>{% for code, name in markets %}<option value="{{ code }}" {% if selected_market == code %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+      <label class="sr-only" for="verificationFilter">Verification</label>
+      <select id="verificationFilter" name="verification" class="filter-input"><option value="">All verification statuses</option><option value="verified" {% if selected_verification == 'verified' %}selected{% endif %}>Verified</option><option value="unverified" {% if selected_verification == 'unverified' %}selected{% endif %}>Unverified</option><option value="rejected" {% if selected_verification == 'rejected' %}selected{% endif %}>Rejected</option></select>
+      <label class="sr-only" for="archiveFilter">Archive status</label>
+      <select id="archiveFilter" name="archive" class="filter-input"><option value="active" {% if selected_archive == 'active' %}selected{% endif %}>Active questions</option><option value="archived" {% if selected_archive == 'archived' %}selected{% endif %}>Archived</option><option value="all" {% if selected_archive == 'all' %}selected{% endif %}>All</option></select>
+      <button class="btn btn-quiet" type="submit">Apply filters</button>
+      <a class="filter-clear" href="{{ url_for('research.index') }}">Clear</a>
+    </form>
+
+    {% if questions.items %}
+      <form action="{{ url_for('research.bulk_archive') }}" method="post" id="questionSelectionForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="table-responsive">
+          <table class="table dashboard-table research-table align-middle">
+            <thead><tr><th scope="col"><label class="sr-only" for="selectAllQuestions">Select all questions on this page</label><input id="selectAllQuestions" type="checkbox" class="research-checkbox" aria-label="Select all questions on this page"></th><th scope="col">Question</th><th scope="col">Category / market</th><th scope="col">Source</th><th scope="col">Verification</th><th scope="col">Measurements</th><th scope="col">Actions</th></tr></thead>
+            <tbody>
+              {% for question in questions.items %}
+                <tr>
+                  <td><input class="research-checkbox question-selector" type="checkbox" name="question_ids" value="{{ question.id }}" aria-label="Select question {{ question.id }}" {% if not question.is_active %}disabled{% endif %}></td>
+                  <td><a class="research-question-link" href="{{ url_for('research.question_detail', question_id=question.id) }}">{{ question.question_text }}</a><span class="table-subtext">#{{ question.id }} · {{ question.language }}</span></td>
+                  <td>{{ question.topic or 'Uncategorized' }}<span class="table-subtext">{{ question.market }}</span></td>
+                  <td>{% if question.source_url %}<a class="source-link" href="{{ question.source_url }}" target="_blank" rel="noopener noreferrer">{{ question.source_type|replace('_', ' ')|title if question.source_type else 'Source' }} ↗</a>{% else %}<span class="table-subtext">No source recorded</span>{% endif %}</td>
+                  <td><span class="state-badge {{ 'state-recorded' if question.verification_status == 'verified' else 'state-pending' }}">{{ question.verification_status|capitalize }}</span></td>
+                  <td>{{ measurement_counts.get(question.id, 0) }}</td>
+                  <td><a class="table-action" href="{{ url_for('research.question_detail', question_id=question.id) }}">View</a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
+      {% if questions.pages > 1 %}
+        <nav class="pagination-nav" aria-label="Question pages">
+          <span>Page {{ questions.page }} of {{ questions.pages }} · {{ questions.total }} questions</span>
+          <div>{% if questions.has_prev %}<a class="page-link" href="{{ url_for('research.index', page=questions.prev_num, q=search, topic=selected_topic, market=selected_market, verification=selected_verification, archive=selected_archive) }}">Previous</a>{% endif %}{% if questions.has_next %}<a class="page-link" href="{{ url_for('research.index', page=questions.next_num, q=search, topic=selected_topic, market=selected_market, verification=selected_verification, archive=selected_archive) }}">Next</a>{% endif %}</div>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="research-empty">
+        <span class="empty-chart-icon" aria-hidden="true">⌕</span>
+        <strong>{% if search or selected_topic or selected_market or selected_verification %}No questions match these filters.{% elif selected_archive == 'archived' %}No archived questions.{% else %}No research questions yet.{% endif %}</strong>
+        <p>Add questions from sources you actually checked, or import your documented CSV. Questions are not generated or attributed to sources automatically.</p>
+        <a class="btn btn-primary-cta" href="{{ url_for('research.create_question') }}">Add a real question <span aria-hidden="true">→</span></a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading">
+      <div><h2>Visibility metrics</h2><p>Rates use assessed records only; unassessed observations are excluded, not treated as negative mentions.</p></div>
+      <a class="btn btn-quiet" href="{{ url_for('research.measurement_history') }}">Measurement history</a>
+    </div>
+    <div class="metric-explainer-grid">
+      <div><span>Brand mention rate</span><strong>{% if metrics.mention_rate is not none %}{{ metrics.mention_rate }}%{% else %}Not enough assessed data{% endif %}</strong><small>{{ metrics.mentioned_count }} mentions / {{ metrics.assessed_sample }} assessed observations</small></div>
+      <div><span>Brand citation rate</span><strong>{% if metrics.citation_rate is not none %}{{ metrics.citation_rate }}%{% else %}Not enough assessed data{% endif %}</strong><small>{{ metrics.citation_count }} cited mentions / {{ metrics.assessed_sample }} assessed observations</small></div>
+      <div><span>Historical change</span><strong>{% if metrics.period_change.change is not none %}{{ '%+.1f'|format(metrics.period_change.change) }} pp{% else %}Awaiting two periods{% endif %}</strong><small>Earlier {{ metrics.period_change.earlier if metrics.period_change.earlier is not none else '—' }}% (n={{ metrics.period_change.earlier_sample }}) · recent {{ metrics.period_change.recent if metrics.period_change.recent is not none else '—' }}% (n={{ metrics.period_change.recent_sample }})</small></div>
+    </div>
+    <div class="table-responsive">
+      <table class="table dashboard-table align-middle">
+        <thead><tr><th scope="col">Market</th><th scope="col">Engine</th><th scope="col">Observations</th><th scope="col">Assessed sample</th><th scope="col">Question coverage</th><th scope="col">Mention rate</th><th scope="col">Citation rate</th></tr></thead>
+        <tbody>
+          {% for row in metrics.breakdown %}
+            <tr><td>{{ row.market }}</td><td>{{ row.engine }}</td><td>{{ row.sample_size }}</td><td>{{ row.assessed_sample }}</td><td>{{ row.question_coverage }} / {{ metrics.total_questions }}</td><td>{% if row.mention_rate is not none %}{{ row.mention_rate }}%{% else %}Not assessed{% endif %}</td><td>{% if row.citation_rate is not none %}{{ row.citation_rate }}%{% else %}Not assessed{% endif %}</td></tr>
+          {% else %}
+            <tr><td colspan="7" class="research-inline-empty">No recorded measurements yet. Metrics will appear when observations are saved.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="competitor-summary">
+      <div><strong>Observed competitor mentions</strong><span>Counts are source-answer observations; no search volume is implied.</span></div>
+      {% if metrics.competitors %}<ul>{% for name, count in metrics.competitors %}<li><span>{{ name }}</span><strong>{{ count }}</strong></li>{% endfor %}</ul>{% else %}<p>No competitor mentions recorded.</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading">
+      <div><h2>Measurement profiles</h2><p>Choose an assistant or permitted Google result profile. API integrations are not configured.</p></div>
+      <a class="btn btn-primary-cta" href="{{ url_for('research.new_measurement') }}">Record an observation <span aria-hidden="true">+</span></a>
+    </div>
+    <div class="profile-chips">{% for profile in ['ChatGPT', 'Gemini', 'Perplexity', 'Claude', 'Copilot', 'Google AI Overviews', 'Google Search'] %}<span>{{ profile }} <small>Manual</small></span>{% endfor %}</div>
+    <p class="manual-disclaimer">Manual evidence entry only. This application does not sign in to platforms, solve CAPTCHAs, scrape results, or claim an assistant was checked. Use authorized integrations only when configured.</p>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/research.js') }}" defer></script>
+{% endblock %}

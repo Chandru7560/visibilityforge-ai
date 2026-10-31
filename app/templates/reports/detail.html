@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Report {{ report.id }} | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header detail-header">
+    <div><div class="section-kicker">EVIDENCE REPORT · {{ report.execution_status|upper }}</div><h1>{{ report.week_start.isoformat() }} – {{ (report.period_end or report.week_start).isoformat() }}</h1><p>{{ report.summary }}</p></div>
+    <div class="research-actions"><a class="btn btn-quiet" href="{{ url_for('reports.index') }}">All reports</a><a class="btn btn-quiet" href="{{ url_for('reports.report_json', report_id=report.id) }}">weekly-report.json</a><a class="btn btn-quiet" href="{{ url_for('reports.readable_report', report_id=report.id) }}">Readable HTML</a></div>
+  </header>
+  <div class="integration-notice" role="note"><strong>Interpretation guardrail</strong><span>Report values summarize records entered in VisibilityForge AI. They do not prove causation, ranking improvements, indexation, or external publication. See each formula, denominator, sample, and evidence link before interpreting a value.</span></div>
+  <section class="research-stats" aria-label="Report execution facts">
+    <article class="research-stat"><span>Execution status</span><strong>{{ report.execution_status|title }}</strong><small>Failures are recorded; refresh does not create another record for this range.</small></article>
+    <article class="research-stat"><span>Duration</span><strong>{{ report.execution_duration_ms or 0 }} ms</strong><small>Report calculation runtime</small></article>
+    <article class="research-stat"><span>Generated</span><strong>{{ report.created_at.strftime('%Y-%m-%d') }}</strong><small>{{ report.created_at.strftime('%H:%M UTC') }}</small></article>
+    <article class="research-stat"><span>Comparison</span><strong>{{ report.metrics.metadata.comparison_note if report.metrics and report.metrics.metadata else 'Unavailable' }}</strong><small>Equal-length immediately preceding period</small></article>
+  </section>
+  {% if report.error_message %}<div class="audit-error" role="alert">{{ report.error_message }}</div>{% endif %}
+  {% if report.execution_status == 'completed' and report.metrics %}
+  {% set metrics = report.metrics.metrics %}
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Period metrics</h2><p>Tracked and verified question counts use question creation date; other records use their documented record timestamp.</p></div></div>
+    <div class="table-responsive"><table class="table dashboard-table align-middle report-metrics-table">
+      <thead><tr><th scope="col">Metric</th><th scope="col">Value</th><th scope="col">Sample / denominator</th><th scope="col">Formula</th></tr></thead>
+      <tbody>
+        {% for key, label in [('questions_tracked','Questions tracked'), ('verified_question_sources','Verified question sources'), ('measurements','Measurements'), ('mention_rate','IncuBrix mention rate'), ('citation_rate','Citation rate'), ('content_drafts_created','Content drafts created'), ('content_pages_marked_published','Content pages marked published'), ('citation_opportunities_researched','Citation opportunities researched'), ('data_collection_failures','Data collection failures')] %}
+        {% set metric = metrics[key] %}
+        <tr><th scope="row">{{ label }}</th><td>{% if metric.value is none %}Not available{% elif key in ['mention_rate', 'citation_rate'] %}{{ metric.value if metric.value is not none else 'Not assessed' }}{% if metric.value is not none %}%{% endif %}{% else %}{{ metric.value }}{% endif %}</td><td>{{ metric.sample_size }}{% if metric.numerator is not none %} · {{ metric.numerator }} / {{ metric.denominator }}{% endif %}</td><td>{{ metric.formula }}{% if key == 'content_pages_marked_published' %} This is an application status, not publication proof.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Measurement coverage by engine and market</h2><p>Includes incomplete and failed attempts; a failed check is not a negative mention.</p></div></div>
+    {% if metrics.measurement_coverage.value %}<div class="table-responsive"><table class="table dashboard-table align-middle report-metrics-table">
+      <thead><tr><th scope="col">Engine</th><th scope="col">Market</th><th scope="col">Measurements</th><th scope="col">Distinct questions</th><th scope="col">Failed attempts</th><th scope="col">Evidence</th></tr></thead>
+      <tbody>{% for row in metrics.measurement_coverage.value %}<tr><td>{{ row.engine }}</td><td>{{ row.market }}</td><td>{{ row.measurement_count }}</td><td>{{ row.question_count }}</td><td>{{ row.failed_count }}</td><td>{% for evidence in row.evidence %}<a class="table-action" href="{{ evidence.url }}">#{{ evidence.record_id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>{% endfor %}</tbody>
+    </table></div>{% else %}<div class="research-empty"><strong>No measurements in this period.</strong><p>Coverage is unavailable; absence is not a negative mention.</p></div>{% endif %}
+  </section>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Technical issues by severity</h2><p>Counts are based on audit issue creation dates, independent of current issue status.</p></div></div>
+    <div class="report-severity-grid">{% for severity, metric in metrics.technical_issues_by_severity.value.items() %}<article class="research-stat"><span>{{ severity|title }}</span><strong>{{ metric.value }}</strong><small>Observed issues created during range</small></article>{% endfor %}</div>
+  </section>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Competitor mention frequency</h2><p>Counts reflect non-failed measurement records; each competitor is counted at most once per measurement.</p></div></div>
+    {% if metrics.competitor_mentions.value %}<div class="table-responsive"><table class="table dashboard-table align-middle"><thead><tr><th scope="col">Competitor as recorded</th><th scope="col">Frequency</th><th scope="col">Evidence records</th></tr></thead><tbody>{% for item in metrics.competitor_mentions.value %}<tr><td>{{ item.name }}</td><td>{{ item.frequency }}</td><td>{% for evidence in item.evidence %}<a class="table-action" href="{{ evidence.url }}">#{{ evidence.record_id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="research-empty"><strong>No competitor names recorded in this period.</strong></div>{% endif %}
+  </section>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Previous-period comparison</h2><p>{{ report.metrics.previous_period.start }} through {{ report.metrics.previous_period.end }} · equal-length period. Changes are descriptive and not causal.</p></div></div>
+    <div class="table-responsive"><table class="table dashboard-table align-middle report-metrics-table"><thead><tr><th scope="col">Metric</th><th scope="col">Previous</th><th scope="col">Current</th><th scope="col">Change</th><th scope="col">Sample sizes</th></tr></thead><tbody>
+      {% for key, item in report.metrics.period_comparison.items() %}<tr><th scope="row">{{ key|replace('_', ' ')|title }}</th><td>{{ item.previous if item.previous is not none else 'Not available' }}{% if item.previous is not none and item.unit == 'percentage_points' %}%{% endif %}</td><td>{{ item.current if item.current is not none else 'Not available' }}{% if item.current is not none and item.unit == 'percentage_points' %}%{% endif %}</td><td>{% if item.change is not none %}{{ '+' if item.change > 0 else '' }}{{ item.change }}{% if item.unit == 'percentage_points' %} pp{% endif %}{% else %}Not comparable{% endif %}</td><td>{{ item.previous_sample_size }} / {{ item.current_sample_size }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Assessment evidence index</h2><p>Every report claim links to supporting account records. Empty evidence lists mean no supporting record was present.</p></div></div>
+    <ul class="report-evidence-index">{% for entry in report.metrics.evidence_index %}<li><strong>{{ entry.claim|replace('_', ' ')|title }}</strong><span>{{ entry.record_count }} supporting record(s)</span><div>{% for item in entry.records %}<a href="{{ item.url }}">{{ item.label }}</a>{% if not loop.last %}<span aria-hidden="true"> · </span>{% endif %}{% endfor %}{% if not entry.records %}<span>No supporting records in range.</span>{% endif %}</div></li>{% endfor %}</ul>
+  </section>
+  <form method="post" action="{{ url_for('reports.run_again', report_id=report.id) }}" class="report-refresh-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-primary-cta" type="submit">Run report again · refresh same record</button></form>
+  {% endif %}
+</div>
+{% endblock %}

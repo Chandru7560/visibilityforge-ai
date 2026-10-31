@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Evidence audit #{{ measurement.id }} | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <a class="back-link" href="{{ url_for('research.measurement_history') }}">← Measurement history</a>
+  <section class="research-panel">
+    <header class="research-header detail-header">
+      <div><div class="section-kicker">EVIDENCE AUDIT · OBSERVATION #{{ measurement.id }}</div><h1>{{ measurement.engine }} · {{ measurement.market }}</h1><p>{{ measurement.collected_at.strftime('%Y-%m-%d %H:%M UTC') }} · {{ measurement.time_zone }} · {{ measurement.collection_method|capitalize }}</p></div>
+      <span class="state-badge {{ 'state-recorded' if measurement.collection_status == 'complete' else 'state-pending' }}">{{ measurement.collection_status|capitalize }}</span>
+    </header>
+    <div class="evidence-audit-grid">
+      <div><span>Research question</span><a href="{{ url_for('research.question_detail', question_id=measurement.question_id) }}">{{ measurement.question.question_text }}</a></div>
+      <div><span>Search location setting</span><strong>{{ measurement.location_setting or 'Not recorded' }} · {{ measurement.market }}</strong></div>
+      <div><span>IncuBrix mention</span><strong>{{ measurement.mention_status|replace('_', ' ')|capitalize if measurement.mention_status else 'Not assessed' }}</strong></div>
+      <div><span>Sentiment</span><strong>{{ measurement.sentiment|capitalize if measurement.sentiment else 'Not assessed' }}</strong></div>
+      <div><span>Google organic rank</span><strong>{{ measurement.google_rank if measurement.google_rank else 'Not observed' }}</strong></div>
+      <div><span>Featured snippet / answer box</span><strong>{{ 'Observed' if measurement.featured_snippet else 'Not observed' if measurement.featured_snippet is false else 'Not assessed' }}</strong></div>
+      <div><span>Google AI Overview</span><strong>{{ 'Observed' if measurement.ai_overview else 'Not observed' if measurement.ai_overview is false else 'Not assessed' }}</strong></div>
+      <div><span>Visibility score</span><strong>{{ '%.1f'|format(measurement.visibility_score) ~ '%' if measurement.visibility_score is not none else 'Not measured' }}</strong></div>
+    </div>
+    <div class="audit-text-block"><h2>Observed result</h2><p>{{ measurement.raw_answer }}</p></div>
+    {% if measurement.mention_context %}<div class="audit-text-block"><h2>Mention context</h2><p>{{ measurement.mention_context }}</p></div>{% endif %}
+    <div class="audit-text-block"><h2>Cited URLs</h2>{% if measurement.cited_urls %}<ul class="evidence-links">{% for url in measurement.cited_urls %}<li><a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></li>{% endfor %}</ul>{% else %}<p>No citations recorded.</p>{% endif %}</div>
+    <div class="audit-text-block"><h2>Screenshot or evidence reference</h2>{% if measurement.screenshot_reference %}<p><a href="{{ measurement.screenshot_reference }}" target="_blank" rel="noopener noreferrer">{{ measurement.screenshot_reference }}</a></p>{% else %}<p>No screenshot reference recorded.</p>{% endif %}</div>
+    <div class="audit-text-block"><h2>Competitor observations</h2>{% if measurement.competitor_names %}<ul class="competitor-evidence">{% for name in measurement.competitor_names %}<li><strong>{{ name }}</strong><span>{% for mention in mentions if mention.competitor.name|lower == name|lower %}{{ mention.evidence_excerpt or 'Name recorded; no separate excerpt supplied.' }}{% else %}Name recorded; no separate excerpt supplied.{% endfor %}</span></li>{% endfor %}</ul>{% else %}<p>No competitors observed.</p>{% endif %}</div>
+    {% if measurement.error_status %}<div class="audit-error" role="status"><strong>Collection error / incompleteness</strong><p>{{ measurement.error_status }}</p></div>{% endif %}
+    {% if measurement.notes %}<div class="audit-text-block"><h2>Notes</h2><p>{{ measurement.notes }}</p></div>{% endif %}
+    <div class="measurement-integrity-note">This saved observation is immutable. To repeat the check, create a new measurement; this record remains in the audit history.</div>
+  </section>
+</div>
+{% endblock %}

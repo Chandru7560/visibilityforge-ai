@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Evidence Reports | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header">
+    <div><div class="section-kicker">REPORTING · SOURCE-LINKED EVIDENCE</div><h1>Weekly reports</h1><p>Generate a date-bounded snapshot of stored records, calculated with explicit sample sizes and formulas.</p></div>
+    <div class="research-actions"><a class="btn btn-quiet" href="{{ url_for('reports.growth_plan') }}">90-day plan</a><a class="btn btn-quiet" href="{{ url_for('reports.content_brief') }}">Content brief generator</a></div>
+  </header>
+  <section class="research-panel content-editor-panel">
+    <div class="research-section-heading"><div><h2>Run a report</h2><p>Manual, repeatable action. Running the same date range refreshes its existing report record.</p></div></div>
+    <form method="post" class="report-range-form">{{ form.hidden_tag() }}
+      <div class="research-field">{{ form.start_date.label(class="form-label") }}{{ form.start_date(class="auth-input", type="date") }}{% for error in form.start_date.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+      <div class="research-field">{{ form.end_date.label(class="form-label") }}{{ form.end_date(class="auth-input", type="date") }}{% for error in form.end_date.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+      <div class="form-actions">{{ form.submit(class="btn btn-primary-cta") }}</div>
+    </form>
+  </section>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Saved report runs</h2><p>Failed executions remain visible with status and duration.</p></div></div>
+    {% if reports %}
+    <div class="table-responsive"><table class="table dashboard-table research-table align-middle">
+      <thead><tr><th scope="col">Period</th><th scope="col">Status</th><th scope="col">Execution</th><th scope="col">Summary</th><th scope="col">Exports</th></tr></thead>
+      <tbody>{% for report in reports %}<tr>
+        <td><a class="research-question-link" href="{{ url_for('reports.detail', report_id=report.id) }}">{{ report.week_start.isoformat() }} – {{ (report.period_end or report.week_start).isoformat() }}</a></td>
+        <td><span class="state-badge {{ 'state-recorded' if report.execution_status == 'completed' else 'state-pending' }}">{{ report.execution_status|title }}</span></td>
+        <td>{{ report.execution_duration_ms or 0 }} ms</td>
+        <td>{{ report.summary }}</td>
+        <td><a class="table-action" href="{{ url_for('reports.report_json', report_id=report.id) }}">JSON</a> · <a class="table-action" href="{{ url_for('reports.readable_report', report_id=report.id) }}">HTML</a></td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="research-empty"><span class="empty-chart-icon" aria-hidden="true">▤</span><strong>No reports have been generated.</strong><p>Run a report for any date range to calculate metrics from records owned by your account. Empty data is shown as zero or unavailable with sample size 0.</p></div>{% endif %}
+  </section>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Download current workspace datasets</h2><p>Exports include saved records for your account, with spreadsheet formula prefixes escaped.</p></div></div>
+    <div class="report-export-grid">
+      <a class="btn btn-quiet" href="{{ url_for('reports.export_visibility') }}">visibility.csv</a>
+      <a class="btn btn-quiet" href="{{ url_for('reports.export_technical_audit') }}">technical-audit.csv</a>
+      <a class="btn btn-quiet" href="{{ url_for('reports.export_citation_plan') }}">citation-plan.csv</a>
+      <a class="btn btn-quiet" href="{{ url_for('reports.export_content_pages') }}">content-pages.csv</a>
+      <a class="btn btn-quiet" href="{{ url_for('reports.export_growth_plan') }}">growth-plan.csv</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

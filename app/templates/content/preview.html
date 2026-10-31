@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ page.seo_title or page.title }} | Content Studio{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header detail-header">
+    <div><div class="section-kicker">CONTENT STUDIO · {{ page.generation_mode|upper }} DRAFT</div><h1>{{ page.seo_title or page.title }}</h1><p>{{ page.target_question or 'Content draft' }}</p></div>
+    <div class="research-actions">
+      <a class="btn btn-quiet" href="{{ url_for('content.export_markdown', page_id=page.id) }}">Export Markdown</a>
+      {% if page.schema_markup %}<a class="btn btn-quiet" href="{{ url_for('content.export_schema', page_id=page.id) }}">Export JSON-LD</a>{% endif %}
+      {% if page.status != 'archived' %}<a class="btn btn-primary-cta" href="{{ url_for('content.edit', page_id=page.id) }}">Edit draft</a>{% endif %}
+    </div>
+  </header>
+  <div class="integration-notice" role="note">
+    <strong>{{ 'External LLM-assisted draft' if page.generation_mode == 'llm' else 'Template-based draft · no external AI model used' }}</strong>
+    <span>This content is not published or independently fact-checked. Supplied source links are user-provided; verify they support the statements before publication. Changing the publication status does not publish the page.</span>
+  </div>
+  <section class="research-stats content-meta-stats">
+    <article class="research-stat"><span>Status</span><strong>{{ page.status|replace('_', ' ')|title }}</strong><small>Workspace publication status</small></article>
+    <article class="research-stat"><span>Target market</span><strong>{{ page.target_market or 'Not set' }}</strong><small>{{ page.search_intent or 'Intent not set' }}</small></article>
+    <article class="research-stat"><span>Primary keyword</span><strong>{{ page.primary_keyword or 'Not set' }}</strong><small>{{ page.content_type|replace('_', ' ')|title }}</small></article>
+    <article class="research-stat"><span>Slug</span><strong class="content-slug">{{ page.slug or 'Not set' }}</strong><small>Draft URL is a non-routable placeholder</small></article>
+  </section>
+  <section class="research-panel content-preview-panel">
+    <div class="research-section-heading"><div><h2>Search metadata</h2><p>Preview of metadata saved with this draft.</p></div></div>
+    <div class="content-meta-box"><strong>{{ page.seo_title or page.title }}</strong><p>{{ page.meta_description or 'No meta description saved.' }}</p></div>
+    {% if page.research_question %}<div class="content-related"><span>Research question</span><a href="{{ url_for('research.question_detail', question_id=page.research_question.id) }}">{{ page.research_question.question_text }}</a></div>{% endif %}
+    {% if page.audit_issue %}<div class="content-related"><span>Audit recommendation</span><a href="{{ url_for('audits.issue_detail', issue_id=page.audit_issue.id) }}">{{ page.audit_issue.title }}</a></div>{% endif %}
+    <div class="content-preview-body"><h2>Draft preview</h2><pre>{{ page.body_markdown or 'No draft content saved.' }}</pre></div>
+    {% if page.supporting_sources %}<div class="audit-text-block"><h2>Supporting sources supplied</h2><ul class="evidence-links">{% for source in page.supporting_sources %}<li><a href="{{ source }}" target="_blank" rel="noopener noreferrer">{{ source }}</a></li>{% endfor %}</ul></div>{% endif %}
+    {% if page.internal_links %}<div class="audit-text-block"><h2>Internal-link suggestions</h2><ul class="evidence-links">{% for link in page.internal_links %}<li><a href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ link }}</a></li>{% endfor %}</ul></div>{% endif %}
+    {% if page.quality_checklist %}<div class="audit-text-block"><h2>Content-quality checklist</h2><ul class="content-checklist">{% for check in page.quality_checklist %}<li><span aria-label="{{ 'Complete' if check.done else 'Needs review' }}">{{ '✓' if check.done else '○' }}</span>{{ check.item }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if page.claims_to_verify %}<div class="audit-text-block"><h2>Claims requiring verification</h2><ul class="content-checklist">{% for claim in page.claims_to_verify %}<li><span aria-hidden="true">!</span>{{ claim }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if schema_json %}<div class="audit-text-block"><h2>Generated JSON-LD schema</h2><p class="field-help">Generated locally from the selected page type. Validate against current Schema.org requirements before use.</p><pre class="content-schema">{{ schema_json }}</pre></div>{% endif %}
+    <div class="form-actions content-preview-actions">
+      {% if page.status != 'archived' %}
+      <form method="post" action="{{ url_for('content.duplicate', page_id=page.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-quiet" type="submit">Duplicate draft</button></form>
+      <form method="post" action="{{ url_for('content.archive', page_id=page.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-danger-quiet" type="submit">Archive</button></form>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

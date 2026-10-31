@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Content Studio | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header">
+    <div>
+      <div class="section-kicker">CONTENT STUDIO · EVIDENCE BEFORE PUBLISHING</div>
+      <h1>Draft, edit, and review content</h1>
+      <p>Build structured page drafts linked to your verified research and audit findings. Draft status does not publish to your website.</p>
+    </div>
+    <div class="research-actions">
+      <form method="post" action="{{ url_for('content.generate_ten') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-quiet" type="submit">Generate up to 10 from verified questions</button>
+      </form>
+      <a class="btn btn-primary-cta" href="{{ url_for('content.create') }}">New content draft <span aria-hidden="true">+</span></a>
+    </div>
+  </header>
+
+  <div class="integration-notice" role="note">
+    <strong>Evidence and drafting mode</strong>
+    <span>Template mode uses no external AI. Optional LLM mode sends the submitted brief and source URLs to the configured content provider. No source URLs or third-party opportunities are invented. The ten-draft action uses only your verified questions with saved source URLs, and drafts still require editorial verification.</span>
+  </div>
+
+  <section class="research-stats" aria-label="Content status summary">
+    <article class="research-stat"><span>Drafts</span><strong>{{ totals.drafts }}</strong><small>Saved working drafts</small></article>
+    <article class="research-stat"><span>Marked published</span><strong>{{ totals.published }}</strong><small>Status is user-managed; nothing is published by this app</small></article>
+    <article class="research-stat"><span>Archived</span><strong>{{ totals.archived }}</strong><small>Hidden from active planning</small></article>
+    <article class="research-stat"><span>Ten-draft source rule</span><strong>Verified</strong><small>Each generated draft must link to a verified question source</small></article>
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading">
+      <div><h2>Content pages</h2><p>Search saved drafts, filter by format or status, and open the editor or preview.</p></div>
+    </div>
+    <form method="get" class="research-filters" aria-label="Filter content drafts">
+      <label class="sr-only" for="contentSearch">Search drafts</label>
+      <input id="contentSearch" class="filter-input" type="search" name="q" value="{{ search }}" placeholder="Search title, question, keyword">
+      <label class="sr-only" for="contentStatus">Publication status</label>
+      <select id="contentStatus" name="status" class="filter-input">
+        <option value="">All statuses</option>
+        {% for value, label in [('draft', 'Draft'), ('needs_update', 'Needs update'), ('published', 'Marked published'), ('archived', 'Archived')] %}
+        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label class="sr-only" for="contentType">Format</label>
+      <select id="contentType" name="type" class="filter-input">
+        <option value="">All formats</option>
+        {% for value, label in content_formats %}<option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-quiet" type="submit">Apply filters</button>
+      <a class="filter-clear" href="{{ url_for('content.index') }}">Clear</a>
+    </form>
+    {% if pages.items %}
+    <div class="table-responsive">
+      <table class="table dashboard-table research-table align-middle">
+        <thead><tr><th scope="col">Draft</th><th scope="col">Format / market</th><th scope="col">Status</th><th scope="col">Drafting mode</th><th scope="col">Updated</th><th scope="col">Actions</th></tr></thead>
+        <tbody>
+          {% for page in pages.items %}
+          <tr>
+            <td><a class="research-question-link" href="{{ url_for('content.preview', page_id=page.id) }}">{{ page.seo_title or page.title }}</a><span class="table-subtext">{{ page.target_question or page.primary_keyword or 'No target recorded' }}</span></td>
+            <td>{{ dict(content_formats).get(page.content_type, page.content_type|title) }}<span class="table-subtext">{{ page.target_market or 'Market not set' }}</span></td>
+            <td><span class="state-badge {{ 'state-recorded' if page.status == 'published' else 'state-pending' }}">{{ page.status|replace('_', ' ')|title }}</span></td>
+            <td>{{ 'External LLM' if page.generation_mode == 'llm' else 'Template · no external AI' }}</td>
+            <td>{{ page.updated_at.strftime('%Y-%m-%d') }}</td>
+            <td><a class="table-action" href="{{ url_for('content.preview', page_id=page.id) }}">Preview</a> · <a class="table-action" href="{{ url_for('content.edit', page_id=page.id) }}">Edit</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pages.pages > 1 %}
+    <nav class="pagination-nav" aria-label="Content draft pages">
+      <span>Page {{ pages.page }} of {{ pages.pages }} · {{ pages.total }} drafts</span>
+      <div>{% if pages.has_prev %}<a class="page-link" href="{{ url_for('content.index', page=pages.prev_num, q=search, status=selected_status, type=selected_type) }}">Previous</a>{% endif %}{% if pages.has_next %}<a class="page-link" href="{{ url_for('content.index', page=pages.next_num, q=search, status=selected_status, type=selected_type) }}">Next</a>{% endif %}</div>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="research-empty">
+      <span class="empty-chart-icon" aria-hidden="true">✎</span>
+      <strong>No content drafts match these filters.</strong>
+      <p>Start from a real research question or a technical audit recommendation. Ten source-linked drafts can be generated when you have eligible verified question records.</p>
+      <a class="btn btn-primary-cta" href="{{ url_for('content.create') }}">Create a draft <span aria-hidden="true">→</span></a>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

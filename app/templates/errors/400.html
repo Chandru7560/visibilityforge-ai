@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Request could not be verified | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<section class="error-section">
+  <div class="container text-center">
+    <span class="section-kicker">400 · REQUEST NOT VERIFIED</span>
+    <h1>We could not verify that request.</h1>
+    <p>{{ message }} Refresh the page and try again.</p>
+    <a class="btn btn-primary-cta mt-3" href="{{ url_for('main.index') }}">Back to home <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+{% endblock %}

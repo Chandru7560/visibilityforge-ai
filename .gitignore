@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment and generated secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Test, type-check, and lint caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Flask and local instance data
+instance/*
+!instance/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+
+# Supplied assessment brief; keep it out of application source control
+IncuBrix_2027_Growth_Engineer_Option_3_AEO_SEO_GEO.pdf
+
+# Candidate-specific workbook and inventory; keep personal details out of source control
+IncuBrix_2027_Growth_Engineer_Option_3_AEO_SEO_GEO_Submission_Workbook.xlsx
+submission/IncuBrix_2027_Growth_Engineer_Option_3_AEO_SEO_GEO_Submission_Workbook_COMPLETED.xlsx
+submission/assessment-evidence-index.md
+submission/run-logs/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

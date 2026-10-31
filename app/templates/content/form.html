@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ mode }} content | Content Studio{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header detail-header">
+    <div><div class="section-kicker">CONTENT STUDIO · {{ mode|upper }}</div><h1>{{ 'Create a structured draft' if mode == 'Create' else 'Edit content draft' }}</h1><p>Draft content is not published by this application. Verify claims and citations before publication.</p></div>
+    <a class="btn btn-quiet" href="{{ url_for('content.index') }}">Back to Content Studio</a>
+  </header>
+  <div class="integration-notice" role="note">
+    <strong>Template mode is not AI</strong>
+    <span>Choose template-based drafting to generate locally with no external model. LLM mode is optional and sends this brief and source URLs to the configured provider. Product, pricing, availability, and comparison claims remain subject to human verification.</span>
+  </div>
+  <section class="research-panel content-editor-panel">
+    <form method="post" class="research-form">
+      {{ form.hidden_tag() }}
+      <div class="content-editor-grid">
+        <div class="research-field">
+          {{ form.target_question.label(class="form-label") }}
+          {{ form.target_question(class="auth-input", rows="2") }}
+          {% for error in form.target_question.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="research-field">
+          {{ form.primary_keyword.label(class="form-label") }}
+          {{ form.primary_keyword(class="auth-input") }}
+          {% for error in form.primary_keyword.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="research-field">{{ form.search_intent.label(class="form-label") }}{{ form.search_intent(class="auth-input") }}{% for error in form.search_intent.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.target_market.label(class="form-label") }}{{ form.target_market(class="auth-input") }}{% for error in form.target_market.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.intended_audience.label(class="form-label") }}{{ form.intended_audience(class="auth-input") }}{% for error in form.intended_audience.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.content_type.label(class="form-label") }}{{ form.content_type(class="auth-input") }}{% for error in form.content_type.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field field-wide">{{ form.supporting_sources.label(class="form-label") }}{{ form.supporting_sources(class="auth-input", rows="3", placeholder="https://...") }}<p class="field-help">{{ form.supporting_sources.description }}</p>{% for error in form.supporting_sources.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field field-wide">{{ form.internal_links.label(class="form-label") }}{{ form.internal_links(class="auth-input", rows="2", placeholder="https://your-site.example/relevant-page") }}{% for error in form.internal_links.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.generation_mode.label(class="form-label") }}{% if mode == 'Create' %}{{ form.generation_mode(class="auth-input") }}{% else %}{{ form.generation_mode(class="auth-input", disabled=true) }}<p class="field-help">Saved drafting provenance cannot be changed by editing the draft.</p>{% endif %}{% for error in form.generation_mode.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.status.label(class="form-label") }}{{ form.status(class="auth-input") }}<p class="field-help">“Marked published” is a workspace status only; no website publishing integration is configured.</p>{% for error in form.status.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.research_question_id.label(class="form-label") }}{{ form.research_question_id(class="auth-input") }}{% for error in form.research_question_id.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.audit_issue_id.label(class="form-label") }}{{ form.audit_issue_id(class="auth-input") }}{% for error in form.audit_issue_id.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        {% if mode == 'Edit' %}
+        <div class="content-editor-divider field-wide"><span>Editable draft output</span><small>Save updates the record and recalculates its applicable local schema markup.</small></div>
+        <div class="research-field">{{ form.seo_title.label(class="form-label") }}{{ form.seo_title(class="auth-input") }}{% for error in form.seo_title.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field">{{ form.meta_description.label(class="form-label") }}{{ form.meta_description(class="auth-input", rows="2") }}{% for error in form.meta_description.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field field-wide">{{ form.slug.label(class="form-label") }}{{ form.slug(class="auth-input") }}{% for error in form.slug.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        <div class="research-field field-wide">{{ form.body_markdown.label(class="form-label") }}{{ form.body_markdown(class="auth-input content-body-input", rows="24") }}{% for error in form.body_markdown.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
+        {% endif %}
+      </div>
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-primary-cta", value=('Generate and save draft' if mode == 'Create' else 'Save changes')) }}
+        <a class="btn btn-quiet" href="{{ url_for('content.index') }}">Cancel</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

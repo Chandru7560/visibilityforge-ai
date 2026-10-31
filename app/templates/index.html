@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}VisibilityForge AI | Search visibility, reimagined{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="container hero-content">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-7">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> A new era of search visibility</div>
+        <h1>Be the answer.<br><span class="gradient-text">Everywhere people search.</span></h1>
+        <p class="hero-copy">Understand how your brand shows up across AI answers, search engines, and generative experiences — then turn visibility into measurable growth.</p>
+        <div class="d-flex flex-column flex-sm-row gap-3 mt-4" id="get-started">
+          <a class="btn btn-primary-cta" href="{{ url_for('auth.login') }}">Sign in to your workspace <span aria-hidden="true">→</span></a>
+          <a class="btn btn-secondary-cta" href="#workflow">See how it works</a>
+        </div>
+        <div class="trust-note"><span aria-hidden="true">✦</span> AEO <span class="trust-separator">/</span> SEO <span class="trust-separator">/</span> GEO intelligence</div>
+      </div>
+      <div class="col-lg-5">
+        <div class="signal-card" aria-label="Illustration of visibility insights">
+          <div class="signal-card-top"><span class="signal-label">YOUR VISIBILITY SIGNAL</span><span class="live-indicator"><i></i> INSIGHTS</span></div>
+          <div class="signal-score-row">
+            <div><div class="signal-score">Seen<span>.</span></div><div class="signal-caption">Across the search landscape</div></div>
+            <div class="signal-orbit" aria-hidden="true"><span class="orbit-core">V</span><i class="orbit-point point-one"></i><i class="orbit-point point-two"></i><i class="orbit-point point-three"></i></div>
+          </div>
+          <div class="signal-divider"></div>
+          <div class="signal-channels">
+            <div class="channel-row"><span class="channel-icon icon-answer">A</span><span>Answer engines</span><span class="channel-status">AEO</span></div>
+            <div class="channel-row"><span class="channel-icon icon-search">S</span><span>Search discovery</span><span class="channel-status">SEO</span></div>
+            <div class="channel-row"><span class="channel-icon icon-generative">G</span><span>Generative results</span><span class="channel-status">GEO</span></div>
+          </div>
+          <div class="card-footnote"><span class="footnote-line"></span> One clear view of your digital presence</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="platform-section" id="platform">
+  <div class="container">
+    <div class="section-heading text-center">
+      <span class="section-kicker">ONE PLATFORM. A WIDER VIEW.</span>
+      <h2>Visibility is changing.<br><span class="gradient-text">Your strategy should, too.</span></h2>
+      <p>Bring the signals shaping modern discovery into one place — and make your next move with clarity.</p>
+    </div>
+    <div class="row g-3 feature-grid">
+      <div class="col-md-4">
+        <article class="feature-card">
+          <div class="feature-icon answer-icon">✳</div>
+          <div class="feature-tag">AEO</div>
+          <h3>Show up in the answer</h3>
+          <p>Explore how answer-first experiences surface the brands and sources people trust.</p>
+          <span class="feature-arrow" aria-hidden="true">↗</span>
+        </article>
+      </div>
+      <div class="col-md-4">
+        <article class="feature-card">
+          <div class="feature-icon search-icon">⌕</div>
+          <div class="feature-tag">SEO</div>
+          <h3>Strengthen discovery</h3>
+          <p>Build a grounded view of the search signals that help the right audience find you.</p>
+          <span class="feature-arrow" aria-hidden="true">↗</span>
+        </article>
+      </div>
+      <div class="col-md-4">
+        <article class="feature-card">
+          <div class="feature-icon geo-icon">◎</div>
+          <div class="feature-tag">GEO</div>
+          <h3>Understand AI visibility</h3>
+          <p>See the emerging generative landscape as a new, complementary discovery surface.</p>
+          <span class="feature-arrow" aria-hidden="true">↗</span>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="workflow-section" id="workflow">
+  <div class="container workflow-inner">
+    <div>
+      <span class="section-kicker">FROM SIGNAL TO STRATEGY</span>
+      <h2>Make your next move<br>with <span class="gradient-text">confidence.</span></h2>
+    </div>
+    <p>VisibilityForge AI is being built to help teams understand where they stand, spot opportunities, and shape a smarter search strategy — across the places discovery happens.</p>
+  </div>
+</section>
+{% endblock %}

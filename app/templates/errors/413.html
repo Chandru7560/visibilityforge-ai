@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Upload too large | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<section class="error-section">
+  <div class="container text-center">
+    <span class="section-kicker">413 · UPLOAD TOO LARGE</span>
+    <h1>This file exceeds the upload limit.</h1>
+    <p>Choose a smaller CSV file and try again. The maximum request size is 2 MB.</p>
+    <a class="btn btn-primary-cta mt-3" href="{{ url_for('research.import_questions') }}">Return to question import <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+{% endblock %}

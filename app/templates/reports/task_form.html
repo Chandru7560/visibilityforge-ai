@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Growth task | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header detail-header"><div><div class="section-kicker">LAUNCH PLAN · TASK EDITOR</div><h1>{{ 'Edit task' if task else 'Add task' }}</h1><p>Suggested targets and actual outcomes are recorded separately.</p></div><a class="btn btn-quiet" href="{{ url_for('reports.growth_plan') }}">Back to plan</a></header>
+  <section class="research-panel content-editor-panel">
+    <form method="post">{{ form.hidden_tag() }}
+      <div class="content-editor-grid">
+        {% for field in [form.title, form.week_index, form.week_start, form.owner, form.priority, form.status, form.due_date, form.budget_amount, form.budget_currency, form.description, form.tools, form.target_metrics, form.target_is_suggested, form.risks, form.actual_outcome] %}
+        <div class="research-field {% if field.name in ['description','tools','target_metrics','risks','actual_outcome'] %}field-wide{% endif %}">
+          {{ field.label(class="form-label") }}
+          {% if field.name in ['description','tools','target_metrics','risks','actual_outcome'] %}{{ field(class="auth-input", rows="3") }}{% elif field.name == 'week_start' or field.name == 'due_date' %}{{ field(class="auth-input", type="date") }}{% elif field.name == 'target_is_suggested' %}<div class="form-check">{{ field(class="form-check-input") }}{{ field.label(class="form-check-label") }}</div>{% else %}{{ field(class="auth-input") }}{% endif %}
+          {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="integration-notice"><strong>Targets and outcomes</strong><span>Keep suggested targets checked unless you have explicitly adopted them. Actual outcome text is manual recordkeeping and does not imply measurable SEO impact.</span></div>
+      <div class="form-actions">{{ form.submit(class="btn btn-primary-cta") }}<a class="btn btn-quiet" href="{{ url_for('reports.growth_plan') }}">Cancel</a></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ mode }} question | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page narrow-research-page">
+  <a class="back-link" href="{{ url_for('research.index') }}">← Research hub</a>
+  <section class="research-panel form-panel">
+    <div class="research-section-heading"><div><div class="section-kicker">QUESTION MANAGEMENT</div><h1>{{ mode }} question</h1><p>Attribute a question only to a source you actually verified. Duplicate questions are rejected.</p></div></div>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="form-grid">
+        {% for field in [form.question_text, form.topic, form.market, form.language, form.source_type, form.source_url, form.verification_status] %}
+          <div class="research-field {% if field.name in ['question_text', 'source_url'] %}field-wide{% endif %}">
+            {{ field.label(class="form-label") }}
+            {% if field.type == 'SelectField' %}{{ field(class="form-select auth-input") }}{% else %}{{ field(class="form-control auth-input", placeholder="https://...") }}{% endif %}
+            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+      <p class="field-help">Supported source types: search suggestions, keyword tools, forums, community discussions, and People Also Ask. A verification status never asserts independent verification; only mark verified after checking the linked source yourself.</p>
+      <div class="form-actions">{{ form.submit(class="btn btn-primary-cta") }}<a class="btn btn-quiet" href="{{ url_for('research.index') }}">Cancel</a></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

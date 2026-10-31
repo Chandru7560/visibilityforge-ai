@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrap">
+  <aside class="dashboard-sidebar" aria-label="Workspace navigation">
+    <div class="workspace-label">WORKSPACE</div>
+    <a class="sidebar-link active" href="{{ url_for('dashboard.index') }}" aria-current="page"><span aria-hidden="true">▦</span> Overview</a>
+    <a class="sidebar-link" href="{{ url_for('reports.index') }}"><span aria-hidden="true">▤</span> Reports</a>
+    <a class="sidebar-link" href="{{ url_for('reports.growth_plan') }}"><span aria-hidden="true">◷</span> 90-day plan</a>
+    <a class="sidebar-link" href="#measurement-history"><span aria-hidden="true">⌁</span> Measurements</a>
+    <a class="sidebar-link" href="#technical-health"><span aria-hidden="true">◇</span> Technical health</a>
+    <a class="sidebar-link" href="#content-library"><span aria-hidden="true">▤</span> Content library</a>
+    <a class="sidebar-link" href="#citation-opportunities"><span aria-hidden="true">◎</span> Citations</a>
+    <div class="sidebar-contact">
+      <span class="status-pip"></span>
+      <span>Account contact</span>
+      <a href="mailto:{{ current_user.contact_email }}">{{ current_user.contact_email }}</a>
+    </div>
+  </aside>
+
+  <main class="dashboard-main">
+    <header class="dashboard-heading">
+      <div>
+        <div class="section-kicker">VISIBILITY INTELLIGENCE</div>
+        <h1>Good to see you, {{ current_user.full_name.split(' ')[0] }}.</h1>
+        <p>Here is what your recorded search data says about your visibility.</p>
+      </div>
+      <div class="dashboard-date">{{ now.strftime('%A, %B %d, %Y') }}</div>
+    </header>
+
+    <section class="metric-grid" aria-label="Visibility overview">
+      <article class="metric-card">
+        <div class="metric-label">Tracked questions <span aria-hidden="true">?</span></div>
+        <div class="metric-value">{{ total_questions }}</div>
+        <div class="metric-foot">{{ evidence_questions }} with recorded evidence</div>
+      </article>
+      <article class="metric-card metric-highlight">
+        <div class="metric-label">Latest measured visibility</div>
+        {% if latest_visibility %}
+          <div class="metric-value">{{ '%.1f'|format(latest_visibility[0]) }}<span class="metric-unit">%</span></div>
+          <div class="metric-foot">Measured {{ latest_visibility[1].strftime('%b %d, %Y') }}</div>
+        {% else %}
+          <div class="metric-value metric-empty-value">—</div>
+          <div class="metric-foot">No visibility score measured yet</div>
+        {% endif %}
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">Open technical issues</div>
+        <div class="metric-value">{{ open_issue_count }}</div>
+        <div class="metric-foot">{{ issue_counts['critical'] }} critical · {{ issue_counts['high'] }} high severity</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">Citation opportunities</div>
+        <div class="metric-value">{{ citation_opportunities }}</div>
+        <div class="metric-foot">Recorded opportunities to pursue</div>
+      </article>
+    </section>
+
+    <section class="dashboard-grid dashboard-grid-charts">
+      <article class="panel-card chart-panel">
+        <div class="panel-heading">
+          <div><h2>Visibility trend</h2><p>Recorded scores over the last 90 days</p></div>
+          <span class="panel-badge">MEASURED</span>
+        </div>
+        {% if trend_has_data %}
+          <div class="chart-loading" data-chart-loading role="status">Loading visibility chart…</div>
+          <div class="chart-wrap" data-chart-wrap hidden><canvas id="visibilityChart" aria-label="Measured visibility scores over the last 90 days" role="img"></canvas></div>
+          <div class="chart-error" data-chart-error hidden role="status">Chart unavailable. Measurement history remains available below.</div>
+        {% else %}
+          <div class="chart-empty">
+            <span class="empty-chart-icon" aria-hidden="true">⌁</span>
+            <strong>No visibility measurements yet</strong>
+            <span>Recorded scores will appear here as a trend. Nothing is estimated.</span>
+          </div>
+        {% endif %}
+      </article>
+      <article class="panel-card chart-panel" id="technical-health">
+        <div class="panel-heading">
+          <div><h2>Technical issue distribution</h2><p>Unresolved technical audit issues</p></div>
+          <span class="panel-badge">AUDIT DATA</span>
+        </div>
+        {% if open_issue_count %}
+          <div class="chart-loading" data-chart-loading role="status">Loading issue chart…</div>
+          <div class="issue-chart-layout" data-issue-layout hidden>
+            <div class="issue-chart-wrap"><canvas id="issueChart" aria-label="Unresolved technical issues by severity" role="img"></canvas></div>
+          </div>
+          <div class="chart-error" data-issue-error hidden role="status">Chart unavailable. Severity counts remain listed below.</div>
+          <ul class="severity-legend severity-legend-static">
+            {% for severity, count in issue_counts.items() %}
+              <li><span class="severity-dot severity-{{ severity }}"></span><span>{{ severity|capitalize }}</span><strong>{{ count }}</strong></li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="chart-empty">
+            <span class="empty-chart-icon" aria-hidden="true">◇</span>
+            <strong>No open technical audit issues</strong>
+            <span>Issues will appear after a technical audit is recorded.</span>
+          </div>
+        {% endif %}
+      </article>
+    </section>
+
+    <section class="dashboard-grid dashboard-grid-lower">
+      <article class="panel-card" id="content-library">
+        <div class="panel-heading">
+          <div><h2>Content pages</h2><p>Status of your tracked pages</p></div>
+          <span class="panel-badge">CONTENT</span>
+        </div>
+        {% set content_total = content_counts.values()|sum %}
+        {% if content_total %}
+          <div class="content-status-list">
+            {% for status, count in content_counts.items() %}
+              <div class="content-status-row"><span class="content-status-name">{{ status|replace('_', ' ')|title }}</span><div class="status-track"><span class="status-fill status-fill-{{ status }}" style="width: {{ (count / content_total * 100)|round|int }}%"></span></div><strong>{{ count }}</strong></div>
+            {% endfor %}
+          </div>
+          <div class="panel-note">{{ content_total }} tracked page{{ '' if content_total == 1 else 's' }}</div>
+        {% else %}
+          <div class="compact-empty">No content pages tracked yet.</div>
+        {% endif %}
+      </article>
+
+      <article class="panel-card plan-card">
+        <div class="panel-heading">
+          <div><h2>90-day growth plan</h2><p>Tasks scheduled through {{ plan_end.strftime('%b %d, %Y') }}</p></div>
+          <span class="panel-badge">PLAN</span>
+        </div>
+        {% if plan_task_count %}
+          <div class="plan-total">{{ plan_task_count }} <span>scheduled task{{ '' if plan_task_count == 1 else 's' }}</span></div>
+          <div class="plan-status-grid">
+            {% for status in ('planned', 'in_progress', 'done', 'blocked') %}
+              <div class="plan-status"><strong>{{ plan_counts.get(status, 0) }}</strong><span>{{ status|replace('_', ' ')|title }}</span></div>
+            {% endfor %}
+          </div>
+          <p class="panel-note">Counts reflect tasks with a due date inside the next 90 days.</p>
+        {% else %}
+          <div class="compact-empty">No growth tasks scheduled in the next 90 days.</div>
+        {% endif %}
+      </article>
+    </section>
+
+    <section class="panel-card data-panel citation-panel" id="citation-opportunities">
+      <div class="panel-heading">
+        <div><h2>Citation opportunities</h2><p>Recorded sources your team has marked for follow-up.</p></div>
+        <span class="panel-badge">{{ citation_opportunities }} OPEN</span>
+      </div>
+      {% if citations %}
+        <ul class="citation-list">
+          {% for citation in citations %}
+            <li>
+              <span class="citation-icon" aria-hidden="true">◎</span>
+              <div class="citation-copy">
+                <strong>{{ citation.title or citation.domain }}</strong>
+                <span>{{ citation.domain }}{% if citation.opportunity_score is not none %} · score {{ '%.0f'|format(citation.opportunity_score) }} / 100{% endif %}</span>
+              </div>
+              <a href="{{ citation.url }}" target="_blank" rel="noopener noreferrer" aria-label="Open citation opportunity from {{ citation.domain }}">Open <span aria-hidden="true">↗</span></a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="compact-empty">No citation opportunities recorded yet.</div>
+      {% endif %}
+    </section>
+
+    <section class="panel-card data-panel" id="measurement-history">
+      <div class="panel-heading">
+        <div><h2>Measurement history</h2><p>Individual observations retain their query, engine, market, and evidence.</p></div>
+        <span class="panel-badge">{{ measurements.total }} RECORDS</span>
+      </div>
+      {% if measurements.items %}
+        <div class="table-responsive">
+          <table class="table dashboard-table align-middle">
+            <thead><tr><th scope="col">Question &amp; query</th><th scope="col">Market / engine</th><th scope="col">Collected</th><th scope="col">Visibility</th><th scope="col">Evidence</th><th scope="col">Answer</th></tr></thead>
+            <tbody>
+              {% for measurement in measurements.items %}
+                <tr>
+                  <td><strong>{{ measurement.question.question_text }}</strong><span class="table-subtext">{{ measurement.query }}</span></td>
+                  <td>{{ measurement.market }}<span class="table-subtext">{{ measurement.engine }}</span></td>
+                  <td>{{ measurement.collected_at.strftime('%b %d, %Y') }}<span class="table-subtext">{{ measurement.collection_method|capitalize }}</span></td>
+                  <td>{% if measurement.visibility_score is not none %}<span class="score-pill">{{ '%.1f'|format(measurement.visibility_score) }}%</span>{% else %}<span class="text-muted">Not scored</span>{% endif %}</td>
+                  <td>{% if measurement.evidence %}<span class="state-badge state-recorded">Recorded</span>{% else %}<span class="state-badge state-pending">None</span>{% endif %}</td>
+                  <td><details class="answer-details"><summary>View answer</summary><p>{{ measurement.raw_answer }}</p>{% if measurement.evidence %}<strong>Evidence</strong><pre>{{ measurement.evidence|tojson(indent=2) }}</pre>{% endif %}</details></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if measurements.pages > 1 %}
+          <nav class="pagination-nav" aria-label="Measurement history pages">
+            <span>Page {{ measurements.page }} of {{ measurements.pages }}</span>
+            <div>
+              {% if measurements.has_prev %}<a class="page-link" href="{{ url_for('dashboard.index', measurements_page=measurements.prev_num, activity_page=activities.page) }}">Previous</a>{% endif %}
+              {% if measurements.has_next %}<a class="page-link" href="{{ url_for('dashboard.index', measurements_page=measurements.next_num, activity_page=activities.page) }}">Next</a>{% endif %}
+            </div>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="table-empty">
+          <strong>No measurements recorded</strong>
+          <span>When your team records a measurement, its source query, market, engine, answer, and evidence will appear here.</span>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="panel-card data-panel activity-panel" id="citation-opportunities">
+      <div class="panel-heading">
+        <div><h2>Recent activity</h2><p>Actions recorded in this workspace</p></div>
+        <span class="panel-badge">ACTIVITY</span>
+      </div>
+      {% if activities.items %}
+        <ol class="activity-list">
+          {% for activity in activities.items %}
+            <li><span class="activity-marker" aria-hidden="true"></span><div><strong>{{ activity.action }}</strong><span>{{ activity.created_at.strftime('%b %d, %Y · %H:%M UTC') }}</span></div></li>
+          {% endfor %}
+        </ol>
+        {% if activities.pages > 1 %}
+          <nav class="pagination-nav" aria-label="Activity pages">
+            <span>Page {{ activities.page }} of {{ activities.pages }}</span>
+            <div>
+              {% if activities.has_prev %}<a class="page-link" href="{{ url_for('dashboard.index', measurements_page=measurements.page, activity_page=activities.prev_num) }}">Previous</a>{% endif %}
+              {% if activities.has_next %}<a class="page-link" href="{{ url_for('dashboard.index', measurements_page=measurements.page, activity_page=activities.next_num) }}">Next</a>{% endif %}
+            </div>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="compact-empty">No activity recorded yet.</div>
+      {% endif %}
+    </section>
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if trend_has_data or open_issue_count %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<script nonce="{{ csp_nonce }}">
+  (() => {
+    const palette = { cyan: "#6ce4e5", violet: "#9c8bff", red: "#fc7481", orange: "#f6b56f", blue: "#6ea7ff" };
+    const gridColor = "rgba(165, 181, 214, .10)";
+    const textColor = "#99a8c3";
+    {% if trend_has_data %}
+    const visibilityLoading = document.querySelector("[data-chart-loading]");
+    const visibilityWrap = document.querySelector("[data-chart-wrap]");
+    const visibilityError = document.querySelector("[data-chart-error]");
+    try {
+      if (!window.Chart) throw new Error("Chart library unavailable.");
+      const labels = {{ trend_labels|tojson }};
+      const values = {{ trend_values|tojson }};
+      const context = document.getElementById("visibilityChart").getContext("2d");
+      const fill = context.createLinearGradient(0, 0, 0, 280);
+      fill.addColorStop(0, "rgba(108, 228, 229, .22)");
+      fill.addColorStop(1, "rgba(108, 228, 229, 0)");
+      new Chart(context, {
+        type: "line",
+        data: { labels, datasets: [{ label: "Measured visibility (%)", data: values, borderColor: palette.cyan, backgroundColor: fill, fill: true, tension: .35, pointRadius: 3, pointHoverRadius: 5, borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: item => `Measured: ${item.formattedValue}%` } } }, scales: { x: { grid: { display: false }, ticks: { color: textColor, maxTicksLimit: 7 } }, y: { min: 0, max: 100, grid: { color: gridColor }, ticks: { color: textColor, callback: value => `${value}%` } } } }
+      });
+      visibilityLoading.hidden = true;
+      visibilityWrap.hidden = false;
+    } catch (error) {
+      console.error("Could not render visibility chart.", error);
+      visibilityLoading.hidden = true;
+      visibilityError.hidden = false;
+    }
+    {% endif %}
+    {% if open_issue_count %}
+    const issueLoading = document.querySelector(".chart-panel#technical-health [data-chart-loading]");
+    const issueLayout = document.querySelector("[data-issue-layout]");
+    const issueError = document.querySelector("[data-issue-error]");
+    try {
+      if (!window.Chart) throw new Error("Chart library unavailable.");
+      const context = document.getElementById("issueChart").getContext("2d");
+      new Chart(context, {
+        type: "doughnut",
+        data: { labels: ["Critical", "High", "Medium", "Low"], datasets: [{ data: [{{ issue_counts['critical'] }}, {{ issue_counts['high'] }}, {{ issue_counts['medium'] }}, {{ issue_counts['low'] }}], backgroundColor: [palette.red, palette.orange, palette.violet, palette.blue], borderColor: "#151e35", borderWidth: 4, hoverOffset: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: "70%", plugins: { legend: { display: false } } }
+      });
+      if (issueLoading) issueLoading.hidden = true;
+      issueLayout.hidden = false;
+    } catch (error) {
+      console.error("Could not render issue chart.", error);
+      if (issueLoading) issueLoading.hidden = true;
+      issueError.hidden = false;
+    }
+    {% endif %}
+  })();
+</script>
+{% endif %}
+{% endblock %}

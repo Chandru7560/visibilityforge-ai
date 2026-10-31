@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Technical audit #{{ run.id }} | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="audit-workspace">
+  <a class="back-link" href="{{ url_for('audits.index') }}">← Audit history</a>
+  <header class="audit-header audit-report-header">
+    <div>
+      <div class="section-kicker">AUDIT REPORT · #{{ run.id }} · {{ run.started_at.strftime('%Y-%m-%d %H:%M UTC') }}</div>
+      <h1>Technical SEO findings</h1>
+      <p class="audit-root-url">{{ run.root_url }}</p>
+      <p>{{ run.pages_crawled }} pages attempted · max depth {{ run.max_depth }} · status {{ run.status }}</p>
+    </div>
+    <a class="btn btn-quiet" href="{{ url_for('audits.export', run_id=run.id, severity=selected_severity, category=selected_category) }}">Export findings CSV</a>
+  </header>
+
+  {% if run.error_summary %}<div class="audit-safety-note" role="status"><strong>Crawl stopped or limited</strong><span>{{ run.error_summary }}</span></div>{% endif %}
+  <section class="audit-summary-grid" aria-label="Audit summary">
+    <article class="research-stat"><span>Pages fetched</span><strong>{{ run.pages|selectattr('crawl_status', 'equalto', 'fetched')|list|length }}</strong><small>Of {{ run.pages_crawled }} page attempts; max {{ run.max_pages }}</small></article>
+    <article class="research-stat"><span>Observed findings</span><strong>{{ run.issues|length }}</strong><small>Recorded for this crawl only</small></article>
+    <article class="research-stat"><span>Robots.txt</span><strong>{{ run.robots_status or 'Unknown' }}</strong><small>Policy is respected; inaccessible critical policies stop crawling</small></article>
+    <article class="research-stat"><span>HTTPS reachable</span><strong>{% if run.https_available is none %}Unknown{% elif run.https_available %}Yes{% else %}No{% endif %}</strong><small>Fetchability is not Google indexing</small></article>
+    <article class="research-stat"><span>Sitemap</span><strong>{{ run.sitemap_status|replace('_', ' ')|capitalize if run.sitemap_status else 'Unknown' }}</strong><small>{% if run.sitemap_url %}<a href="{{ run.sitemap_url }}" target="_blank" rel="noopener noreferrer">Open sitemap</a>{% else %}URL discovery check only{% endif %}</small></article>
+    <article class="research-stat"><span>llms.txt</span><strong>{{ run.llms_status or 'Unknown' }}</strong><small>Optional convention; not an indexing requirement</small></article>
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Prioritized recommendations</h2><p>Observed items are based on this crawl. Proposed items are a review backlog, not detected defects.</p></div></div>
+    {% if run.recommendations %}
+      <ol class="audit-recommendations">
+        {% for item in run.recommendations %}
+          <li>
+            <div class="audit-recommendation-top"><strong>{{ item.title }}</strong><span class="state-badge {{ 'state-recorded' if item.observed else 'state-pending' }}">{{ 'Observed' if item.observed else 'Proposed' }}</span><span class="severity-pill severity-{{ item.severity }}">{{ item.severity|capitalize }}</span></div>
+            <p>{{ item.recommendation }}</p>
+            {% if item.page_url %}<a class="source-link" href="{{ url_for('audits.detail', run_id=run.id, page_filter=item.page_url) }}#pages">{{ item.page_url }}</a>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}<div class="research-empty">No recommendations were generated.</div>{% endif %}
+  </section>
+
+  <section class="research-panel" id="findings">
+    <div class="research-section-heading"><div><h2>Findings</h2><p>Use filters and sorting to review issues and evidence.</p></div></div>
+    <form method="get" class="research-filters" aria-label="Filter audit findings">
+      <label class="sr-only" for="severityFilter">Severity</label>
+      <select class="filter-input" id="severityFilter" name="severity"><option value="">All severities</option>{% for severity, count in severity_counts.items() %}<option value="{{ severity }}" {% if selected_severity == severity %}selected{% endif %}>{{ severity|capitalize }} ({{ count }})</option>{% endfor %}</select>
+      <label class="sr-only" for="categoryFilter">Category</label>
+      <select class="filter-input" id="categoryFilter" name="category"><option value="">All categories</option>{% for item in categories %}<option value="{{ item }}" {% if selected_category == item %}selected{% endif %}>{{ item|replace('_', ' ')|title }}</option>{% endfor %}</select>
+      <label class="sr-only" for="sortFindings">Sort findings</label>
+      <select class="filter-input" id="sortFindings" name="sort"><option value="severity" {% if selected_sort == 'severity' %}selected{% endif %}>Severity</option><option value="category" {% if selected_sort == 'category' %}selected{% endif %}>Category</option><option value="page" {% if selected_sort == 'page' %}selected{% endif %}>Page</option><option value="title" {% if selected_sort == 'title' %}selected{% endif %}>Title</option><option value="date" {% if selected_sort == 'date' %}selected{% endif %}>Date</option></select>
+      <button class="btn btn-quiet" type="submit">Apply</button><a class="filter-clear" href="{{ url_for('audits.detail', run_id=run.id) }}">Clear</a>
+    </form>
+    {% if issues.items %}
+      <div class="table-responsive">
+        <table class="table dashboard-table align-middle">
+          <thead><tr><th scope="col">Severity</th><th scope="col">Finding</th><th scope="col">Category</th><th scope="col">Affected page</th><th scope="col">Validation</th></tr></thead>
+          <tbody>{% for issue in issues.items %}<tr><td><span class="severity-pill severity-{{ issue.severity }}">{{ issue.severity|capitalize }}</span></td><td><a class="research-question-link" href="{{ url_for('audits.issue_detail', issue_id=issue.id) }}">{{ issue.title }}</a><span class="table-subtext">{{ issue.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></td><td>{{ issue.category|replace('_', ' ')|title }}</td><td>{% if issue.page_url %}<a class="source-link" href="{{ issue.page_url }}" target="_blank" rel="noopener noreferrer">{{ issue.page_url }}</a>{% else %}Site-wide{% endif %}</td><td>{{ issue.validation_status|replace('_', ' ')|capitalize }}</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      {% if issues.pages > 1 %}<nav class="pagination-nav" aria-label="Finding pages"><span>Page {{ issues.page }} of {{ issues.pages }} · {{ issues.total }} findings</span><div>{% if issues.has_prev %}<a class="page-link" href="{{ url_for('audits.detail', run_id=run.id, issues_page=issues.prev_num, severity=selected_severity, category=selected_category, sort=selected_sort) }}">Previous</a>{% endif %}{% if issues.has_next %}<a class="page-link" href="{{ url_for('audits.detail', run_id=run.id, issues_page=issues.next_num, severity=selected_severity, category=selected_category, sort=selected_sort) }}">Next</a>{% endif %}</div></nav>{% endif %}
+    {% else %}<div class="research-empty"><strong>No findings match these filters.</strong><p>This does not guarantee the site has no technical issues outside this crawl's scope.</p></div>{% endif %}
+  </section>
+
+  <section class="research-panel" id="pages">
+    <div class="research-section-heading"><div><h2>Discovered pages</h2><p>HTTP response details, content metadata, links, and local structured-data parse status.</p></div></div>
+    <form method="get" class="research-filters" aria-label="Filter discovered pages"><label class="sr-only" for="pageFilter">Page URL filter</label><input id="pageFilter" class="filter-input" type="search" name="page_filter" value="{{ page_filter }}" placeholder="Filter URLs"><button class="btn btn-quiet" type="submit">Filter pages</button></form>
+    {% if pages %}
+      <div class="table-responsive">
+        <table class="table dashboard-table align-middle">
+          <thead><tr><th scope="col">Page</th><th scope="col">HTTP</th><th scope="col">Title</th><th scope="col">Internal links</th><th scope="col">Broken links</th><th scope="col">Response</th><th scope="col">JSON-LD</th></tr></thead>
+          <tbody>{% for page in pages %}<tr><td><a class="source-link" href="{{ page.url }}" target="_blank" rel="noopener noreferrer">{{ page.url }}</a><span class="table-subtext">Depth {{ page.depth }} · {{ page.crawl_status }}</span></td><td>{{ page.status_code or '—' }}</td><td>{{ page.title or '—' }}<span class="table-subtext">{{ page.title_length if page.title_length is not none else 'No title' }} chars</span></td><td>{{ page.internal_links|length }}</td><td>{{ page.broken_internal_links|length }}</td><td>{% if page.response_ms is not none %}{{ page.response_ms }} ms · {{ page.response_bytes }} bytes{% else %}—{% endif %}</td><td>{% if page.jsonld_present is none %}Not parsed{% elif not page.jsonld_present %}Absent{% elif page.jsonld_valid %}JSON valid{% else %}Invalid JSON{% endif %}</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    {% else %}<div class="research-empty"><p>No fetched page records match this filter.</p></div>{% endif %}
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Local snippet validation</h2><p>Check generated JSON-LD syntax or basic HTML metadata locally. This is not an external search-engine or schema validator.</p></div></div>
+    <form method="post" action="{{ url_for('audits.validate_run_snippet', run_id=run.id) }}" class="audit-validation-form">
+      {{ snippet_form.hidden_tag() }}
+      <div class="research-field">{{ snippet_form.kind.label(class="form-label") }}{{ snippet_form.kind(class="form-select auth-input") }}</div>
+      <div class="research-field field-wide">{{ snippet_form.snippet.label(class="form-label") }}{{ snippet_form.snippet(class="form-control auth-input", rows="7", placeholder='<script type="application/ld+json">...</script> or a document head') }}</div>
+      {% for error in snippet_form.snippet.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      <div class="form-actions">{{ snippet_form.submit(class="btn btn-primary-cta") }}</div>
+    </form>
+    {% if run.validation_checks %}
+      <h3 class="audit-validation-heading">Local validation history</h3>
+      <ul class="audit-validation-list">{% for check in run.validation_checks|reverse %}<li><strong>{{ check.kind|replace('_', ' ')|title }} · {{ 'Passed' if check.valid else 'Needs changes' }}</strong><span>{{ check.checked_at }} · {{ check.validator }}</span><ul>{% for detail in check.details %}<li>{{ detail }}</li>{% endfor %}</ul></li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+  <p class="audit-indexing-note"><strong>Indexing status: unknown.</strong> Pages fetched by this crawler are not necessarily indexed by Google. No search-console or indexing integration is configured.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+  <div class="auth-card">
+    <a class="brand-lockup" href="{{ url_for('main.index') }}">
+      <span class="brand-mark" aria-hidden="true">V</span>
+      <span>VisibilityForge<span class="brand-ai"> AI</span></span>
+    </a>
+    <span class="section-kicker">YOUR SEARCH INTELLIGENCE WORKSPACE</span>
+    <h1>Welcome back.</h1>
+    <p class="auth-description">Sign in to review your measured visibility and workspace activity.</p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.email.label(class="form-label") }}
+        {{ form.email(class="form-control auth-input", autocomplete="username", type="email", required=true, autofocus=true, aria_describedby="email-errors") }}
+        {% for error in form.email.errors %}
+          <div class="field-error" id="email-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="mb-3">
+        {{ form.password.label(class="form-label") }}
+        {{ form.password(class="form-control auth-input", autocomplete="current-password", required=true, aria_describedby="password-errors") }}
+        {% for error in form.password.errors %}
+          <div class="field-error" id="password-errors">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-primary-cta w-100" type="submit">Sign in <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="auth-contact">Need workspace access? Contact <a href="mailto:{{ owner_email }}">{{ owner_email }}</a>. Public registration is disabled.</p>
+  </div>
+</section>
+{% endblock %}

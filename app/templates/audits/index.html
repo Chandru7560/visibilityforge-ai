@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Technical SEO Audits | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="audit-workspace">
+  <header class="audit-header">
+    <div>
+      <div class="section-kicker">TECHNICAL SEO · POLITE PUBLIC CRAWL</div>
+      <h1>Technical SEO audit</h1>
+      <p>Inspect a small set of public pages for observable technical issues. A successful fetch does not prove that a page is indexed.</p>
+    </div>
+  </header>
+
+  <section class="research-panel audit-start-panel">
+    <div class="research-section-heading">
+      <div><h2>Start an audit</h2><p>Runs synchronously in this web request with strict page, depth, timeout, response-size, and request-rate limits.</p></div>
+    </div>
+    <div class="audit-safety-note" role="note">
+      <strong>Permission and crawler limits</strong>
+      <span>Only public HTTP/HTTPS destinations on standard ports are allowed. Private IPs, local names, unsafe redirects, and robots.txt-disallowed pages are blocked. You must be authorized and review the site's terms. The crawler identifies itself as VisibilityForgeAuditBot/1.0; this is not legal advice or an external validator.</span>
+    </div>
+    <form method="post" class="audit-form">
+      {{ form.hidden_tag() }}
+      <div class="audit-form-grid">
+        <div class="research-field audit-url-field">
+          {{ form.website_url.label(class="form-label") }}
+          {{ form.website_url(class="form-control auth-input", placeholder="https://www.example.com/") }}
+          {% for error in form.website_url.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          <div class="field-help">{{ form.website_url.description }}</div>
+        </div>
+        <div class="research-field">
+          {{ form.max_pages.label(class="form-label") }}
+          {{ form.max_pages(class="form-control auth-input", min="1", max="50") }}
+          {% for error in form.max_pages.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          <div class="field-help">{{ form.max_pages.description }}</div>
+        </div>
+        <div class="research-field">
+          {{ form.max_depth.label(class="form-label") }}
+          {{ form.max_depth(class="form-control auth-input", min="0", max="3") }}
+          {% for error in form.max_depth.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          <div class="field-help">{{ form.max_depth.description }}</div>
+        </div>
+      </div>
+      <div class="audit-terms-check">
+        {{ form.terms_confirmed(class="form-check-input") }}
+        {{ form.terms_confirmed.label(class="form-check-label") }}
+        {% for error in form.terms_confirmed.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-actions">
+        {{ form.submit(class="btn btn-primary-cta", **{"data-audit-submit": "true"}) }}
+        <span class="field-help">Crawler runs one page at a time; large sites may take several seconds.</span>
+      </div>
+    </form>
+  </section>
+
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Audit history</h2><p>Previous technical audits for your workspace.</p></div></div>
+    {% if runs.items %}
+      <div class="table-responsive">
+        <table class="table dashboard-table align-middle">
+          <thead><tr><th scope="col">Website</th><th scope="col">Started</th><th scope="col">Status</th><th scope="col">Pages</th><th scope="col">Findings</th><th scope="col">Report</th></tr></thead>
+          <tbody>
+            {% for run in runs.items %}
+              <tr>
+                <td>{{ run.root_url or 'URL not recorded' }}</td>
+                <td>{{ run.started_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                <td><span class="state-badge {{ 'state-recorded' if run.status == 'completed' else 'state-pending' }}">{{ run.status|capitalize }}</span></td>
+                <td>{{ run.pages_crawled }}</td>
+                <td>{{ run.issues|length }}</td>
+                <td><a class="table-action" href="{{ url_for('audits.detail', run_id=run.id) }}">Open report</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if runs.pages > 1 %}
+        <nav class="pagination-nav" aria-label="Audit history pages"><span>Page {{ runs.page }} of {{ runs.pages }}</span><div>{% if runs.has_prev %}<a class="page-link" href="{{ url_for('audits.index', page=runs.prev_num) }}">Previous</a>{% endif %}{% if runs.has_next %}<a class="page-link" href="{{ url_for('audits.index', page=runs.next_num) }}">Next</a>{% endif %}</div></nav>
+      {% endif %}
+    {% else %}
+      <div class="research-empty"><strong>No technical audits yet.</strong><p>Your first completed audit report will appear here. No sample audit data is preloaded.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  document.querySelector("[data-audit-submit]")?.addEventListener("click", function () {
+    this.disabled = true;
+    this.textContent = "Audit running…";
+    this.form.submit();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ opportunity.source_name or opportunity.domain }} | Citation Planner{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header detail-header"><div><div class="section-kicker">CITATION PLANNER · {{ opportunity.research_status|replace('_', ' ')|upper }}</div><h1>{{ opportunity.source_name or opportunity.domain }}</h1><p>Opportunity #{{ opportunity.id }} · {{ source_types.get(opportunity.source_type, opportunity.source_type|title) }}</p></div><div class="research-actions"><a class="btn btn-quiet" href="{{ url_for('citations.edit', opportunity_id=opportunity.id) }}">Edit record</a><a class="btn btn-quiet" href="{{ url_for('citations.index') }}">All opportunities</a></div></header>
+  <div class="integration-notice" role="note"><strong>Opportunity, not a confirmed mention</strong><span>Only evidence entered by your team is shown here. A suggested angle is a proposed approach; it does not imply the publisher will add a link or mention.</span></div>
+  <section class="research-panel question-detail-panel">
+    <div class="question-facts">
+      <div><span>Source URL</span><a href="{{ opportunity.url }}" target="_blank" rel="noopener noreferrer">{{ opportunity.url }}</a></div>
+      <div><span>Priority</span><strong>{{ opportunity.priority|title }}</strong></div>
+      <div><span>Research status</span><strong>{{ opportunity.research_status|replace('_', ' ')|title }}</strong></div>
+      <div><span>Target question</span><strong>{{ opportunity.target_question or 'Not recorded' }}</strong></div>
+      {% if question %}<div class="fact-source"><span>Linked research question</span><a href="{{ url_for('research.question_detail', question_id=question.id) }}">{{ question.question_text }}</a></div>{% endif %}
+    </div>
+    <div class="audit-text-block"><h2>Relevance evidence</h2><p>{{ opportunity.relevance_evidence or 'No relevance evidence recorded.' }}</p>{% if opportunity.evidence_url %}<a class="source-link" href="{{ opportunity.evidence_url }}" target="_blank" rel="noopener noreferrer">Open evidence source ↗</a>{% endif %}</div>
+    <div class="audit-text-block"><h2>Existing competitor reference</h2><p>{% if opportunity.competitor_reference %}{{ opportunity.competitor_reference }}{% if opportunity.competitor_evidence_url %} · <a href="{{ opportunity.competitor_evidence_url }}" target="_blank" rel="noopener noreferrer">Evidence ↗</a>{% endif %}{% else %}None recorded. This is not an assertion that no competitor is mentioned.{% endif %}</p></div>
+    <div class="audit-text-block"><h2>Suggested legitimate angle</h2><p>{{ opportunity.suggested_angle or 'No angle recorded.' }}</p></div>
+    <div class="audit-text-block"><h2>Notes</h2><p>{{ opportunity.notes or 'No notes recorded.' }}</p></div>
+    <div class="measurement-integrity-note">Created {{ opportunity.created_at.strftime('%Y-%m-%d %H:%M UTC') }} · Updated {{ opportunity.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Measurement history | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header">
+    <div><div class="section-kicker">REPRODUCIBILITY · EVIDENCE AUDIT</div><h1>Measurement history</h1><p>Observations are immutable, dated, and attributable to an explicit collection method.</p></div>
+    <div class="research-actions"><a class="btn btn-quiet" href="{{ url_for('research.export_visibility', market=selected_market, engine=selected_engine) }}">Export visibility.csv</a><a class="btn btn-primary-cta" href="{{ url_for('research.new_measurement') }}">Record an observation <span aria-hidden="true">+</span></a></div>
+  </header>
+  <section class="research-panel">
+    <form method="get" class="research-filters" aria-label="Filter measurement history">
+      <label class="sr-only" for="measurementMarket">Market</label><select class="filter-input" id="measurementMarket" name="market"><option value="">All markets</option>{% for code, name in markets %}<option value="{{ code }}" {% if selected_market == code %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+      <label class="sr-only" for="measurementEngine">Engine</label><select class="filter-input" id="measurementEngine" name="engine"><option value="">All engines</option>{% for engine in engines %}<option value="{{ engine }}" {% if selected_engine == engine %}selected{% endif %}>{{ engine }}</option>{% endfor %}</select>
+      <label class="sr-only" for="measurementStatus">Collection status</label><select class="filter-input" id="measurementStatus" name="status"><option value="">All collection states</option><option value="complete" {% if selected_status == 'complete' %}selected{% endif %}>Complete</option><option value="incomplete" {% if selected_status == 'incomplete' %}selected{% endif %}>Incomplete</option><option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>Failed</option></select>
+      <label class="sr-only" for="measurementQuestion">Question</label><select class="filter-input" id="measurementQuestion" name="question_id"><option value="">All questions</option>{% for question in questions %}<option value="{{ question.id }}" {% if selected_question == question.id %}selected{% endif %}>{{ question.question_text|truncate(70) }}</option>{% endfor %}</select>
+      <button class="btn btn-quiet" type="submit">Apply filters</button><a class="filter-clear" href="{{ url_for('research.measurement_history') }}">Clear</a>
+    </form>
+    {% if measurements.items %}
+      <div class="table-responsive"><table class="table dashboard-table research-table align-middle"><thead><tr><th scope="col">Collected</th><th scope="col">Question</th><th scope="col">Location / market</th><th scope="col">Engine</th><th scope="col">Method / state</th><th scope="col">IncuBrix mention</th><th scope="col">Evidence</th><th scope="col">Audit</th></tr></thead><tbody>
+      {% for measurement in measurements.items %}
+        <tr><td>{{ measurement.collected_at.strftime('%Y-%m-%d %H:%M UTC') }}</td><td><a class="research-question-link" href="{{ url_for('research.question_detail', question_id=measurement.question_id) }}">{{ measurement.question.question_text }}</a></td><td>{{ measurement.location_setting or 'Not set' }}<span class="table-subtext">{{ measurement.market }}</span></td><td>{{ measurement.engine }}</td><td>{{ measurement.collection_method|capitalize }}<span class="table-subtext">{{ measurement.collection_status|capitalize }}</span></td><td>{{ measurement.mention_status|replace('_', ' ')|capitalize if measurement.mention_status else 'Not assessed' }}</td><td>{% if measurement.screenshot_reference or measurement.cited_urls %}<span class="state-badge state-recorded">Recorded</span>{% else %}<span class="state-badge state-pending">None</span>{% endif %}</td><td><a class="table-action" href="{{ url_for('research.measurement_detail', measurement_id=measurement.id) }}">Evidence audit</a></td></tr>
+      {% endfor %}
+      </tbody></table></div>
+      {% if measurements.pages > 1 %}<nav class="pagination-nav" aria-label="Measurement pages"><span>Page {{ measurements.page }} of {{ measurements.pages }} · {{ measurements.total }} records</span><div>{% if measurements.has_prev %}<a class="page-link" href="{{ url_for('research.measurement_history', page=measurements.prev_num, market=selected_market, engine=selected_engine, status=selected_status) }}">Previous</a>{% endif %}{% if measurements.has_next %}<a class="page-link" href="{{ url_for('research.measurement_history', page=measurements.next_num, market=selected_market, engine=selected_engine, status=selected_status) }}">Next</a>{% endif %}</div></nav>{% endif %}
+    {% else %}
+      <div class="research-empty"><span class="empty-chart-icon" aria-hidden="true">⌁</span><strong>No observations match this history view.</strong><p>Record a manual observation after checking a result, or clear filters to see all records.</p><a class="btn btn-primary-cta" href="{{ url_for('research.new_measurement') }}">Record observation <span aria-hidden="true">→</span></a></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

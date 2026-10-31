@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ mode }} citation opportunity | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header detail-header"><div><div class="section-kicker">CITATION PLANNER · {{ mode|upper }}</div><h1>{{ mode }} opportunity</h1><p>Use a real source URL and separate observed evidence from your outreach hypothesis.</p></div><a class="btn btn-quiet" href="{{ url_for('citations.index') }}">Back to opportunities</a></header>
+  <div class="integration-notice" role="note"><strong>No automatic page research</strong><span>Saving a URL does not fetch it. Do not mark an opportunity researched or record a competitor reference without evidence you personally checked.</span></div>
+  <section class="research-panel content-editor-panel">
+    <form method="post">{{ form.hidden_tag() }}
+      <div class="content-editor-grid citation-form-grid">
+        {% for field in [form.source_name, form.url, form.source_type, form.target_question, form.target_question_id, form.relevance_evidence, form.evidence_url, form.competitor_reference, form.competitor_evidence_url, form.suggested_angle, form.priority, form.research_status, form.notes] %}
+        <div class="research-field {% if field.name in ['relevance_evidence', 'suggested_angle', 'notes'] %}field-wide{% endif %}">
+          {{ field.label(class="form-label") }}
+          {% if field.name in ['relevance_evidence', 'suggested_angle', 'notes'] %}{{ field(class="auth-input", rows="3") }}{% else %}{{ field(class="auth-input") }}{% endif %}
+          {% if field.name == 'evidence_url' %}<p class="field-help">A source proving relevance is required to mark this opportunity researched.</p>{% endif %}
+          {% if field.name == 'competitor_reference' %}<p class="field-help">Leave blank unless you directly verified the reference. If entered, provide its evidence URL.</p>{% endif %}
+          {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="form-actions">{{ form.submit(class="btn btn-primary-cta", value='Save opportunity') }}<a class="btn btn-quiet" href="{{ url_for('citations.index') }}">Cancel</a></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

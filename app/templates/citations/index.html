@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Citation Opportunity Planner | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header">
+    <div><div class="section-kicker">CITATION PLANNER · LEGITIMATE EARNED MENTIONS</div><h1>Citation opportunities</h1><p>Record real third-party sources and evidence. The planner does not discover pages or claim that a competitor is mentioned.</p></div>
+    <div class="research-actions"><a class="btn btn-quiet" href="{{ url_for('citations.export_csv', q=search, type=selected_type, status=selected_status, priority=selected_priority) }}">Export filtered CSV</a><a class="btn btn-primary-cta" href="{{ url_for('citations.create') }}">Add opportunity <span aria-hidden="true">+</span></a></div>
+  </header>
+  <div class="integration-notice" role="note"><strong>Research manually and record evidence</strong><span>Start with up to 30 real third-party prospects you have identified. No sample publishers or URLs are prefilled. “Researched” requires relevance evidence; any competitor reference requires its own evidence URL. A saved prospect is not a claimed mention.</span></div>
+  <section class="research-panel">
+    <div class="research-section-heading"><div><h2>Opportunity workspace</h2><p>{{ opportunities.total }} saved opportunity record(s) · no invented results</p></div></div>
+    <form method="get" class="research-filters" aria-label="Filter citation opportunities">
+      <label class="sr-only" for="citationSearch">Search citation opportunities</label><input id="citationSearch" class="filter-input" type="search" name="q" value="{{ search }}" placeholder="Search source or target question">
+      <label class="sr-only" for="citationType">Source type</label><select id="citationType" class="filter-input" name="type"><option value="">All source types</option>{% for value, label in source_types.items() %}<option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <label class="sr-only" for="citationStatus">Research status</label><select id="citationStatus" class="filter-input" name="status"><option value="">All research statuses</option>{% for value, label in [('unresearched', 'Unresearched'), ('in_progress', 'In progress'), ('researched', 'Researched'), ('dismissed', 'Dismissed')] %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <label class="sr-only" for="citationPriority">Priority</label><select id="citationPriority" class="filter-input" name="priority"><option value="">All priorities</option>{% for value in ['high', 'medium', 'low'] %}<option value="{{ value }}" {% if selected_priority == value %}selected{% endif %}>{{ value|title }}</option>{% endfor %}</select>
+      <button class="btn btn-quiet" type="submit">Apply filters</button><a class="filter-clear" href="{{ url_for('citations.index') }}">Clear</a>
+    </form>
+    {% if opportunities.items %}
+    <div class="table-responsive"><table class="table dashboard-table research-table align-middle">
+      <thead><tr><th scope="col">Source</th><th scope="col">Type / target question</th><th scope="col">Priority</th><th scope="col">Research status</th><th scope="col">Evidence</th><th scope="col">Actions</th></tr></thead>
+      <tbody>{% for opportunity in opportunities.items %}
+        <tr><td><a class="research-question-link" href="{{ url_for('citations.detail', opportunity_id=opportunity.id) }}">{{ opportunity.source_name or opportunity.domain }}</a><span class="table-subtext">{{ opportunity.domain }}</span></td>
+          <td>{{ source_types.get(opportunity.source_type, opportunity.source_type|title) }}<span class="table-subtext">{{ opportunity.target_question or 'No target question recorded' }}</span></td>
+          <td><span class="state-badge {{ 'state-recorded' if opportunity.priority == 'high' else 'state-pending' }}">{{ opportunity.priority|title }}</span></td>
+          <td>{{ opportunity.research_status|replace('_', ' ')|title }}</td>
+          <td>{% if opportunity.evidence_url %}<a class="source-link" href="{{ opportunity.evidence_url }}" target="_blank" rel="noopener noreferrer">Evidence ↗</a>{% else %}<span class="table-subtext">Not recorded</span>{% endif %}</td>
+          <td><a class="table-action" href="{{ url_for('citations.detail', opportunity_id=opportunity.id) }}">View</a> · <a class="table-action" href="{{ url_for('citations.edit', opportunity_id=opportunity.id) }}">Edit</a></td>
+        </tr>{% endfor %}
+      </tbody>
+    </table></div>
+    {% if opportunities.pages > 1 %}<nav class="pagination-nav" aria-label="Citation opportunity pages"><span>Page {{ opportunities.page }} of {{ opportunities.pages }} · {{ opportunities.total }} opportunities</span><div>{% if opportunities.has_prev %}<a class="page-link" href="{{ url_for('citations.index', page=opportunities.prev_num, q=search, type=selected_type, status=selected_status, priority=selected_priority) }}">Previous</a>{% endif %}{% if opportunities.has_next %}<a class="page-link" href="{{ url_for('citations.index', page=opportunities.next_num, q=search, type=selected_type, status=selected_status, priority=selected_priority) }}">Next</a>{% endif %}</div></nav>{% endif %}
+    {% else %}<div class="research-empty"><span class="empty-chart-icon" aria-hidden="true">◎</span><strong>No citation opportunities recorded.</strong><p>Add a real article, directory, comparison, review, or community page you have identified. The planner will not invent candidate URLs.</p><a class="btn btn-primary-cta" href="{{ url_for('citations.create') }}">Record an opportunity <span aria-hidden="true">→</span></a></div>{% endif %}
+  </section>
+</div>
+{% endblock %}

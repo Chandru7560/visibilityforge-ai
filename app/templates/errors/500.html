@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Something went wrong | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<section class="error-section">
+  <div class="container text-center">
+    <span class="section-kicker">500 · SERVER ERROR</span>
+    <h1>We hit an unexpected issue.</h1>
+    <p>Please try again in a moment.</p>
+    <a class="btn btn-primary-cta mt-3" href="{{ url_for('main.index') }}">Back to home <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+{% endblock %}

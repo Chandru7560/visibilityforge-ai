@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Import questions | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page narrow-research-page">
+  <a class="back-link" href="{{ url_for('research.index') }}">← Research hub</a>
+  <section class="research-panel form-panel">
+    <div class="section-kicker">BULK QUESTION IMPORT</div>
+    <h1>Import documented questions</h1>
+    <p class="form-intro">CSV import is atomic: a duplicate or invalid row cancels the entire import. It does not create, discover, or verify questions for you.</p>
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label" for="questionCsv">CSV file</label>
+      <input class="form-control auth-input" id="questionCsv" name="file" type="file" accept=".csv,text/csv" required>
+      <p class="field-help">UTF-8 CSV, up to 2 MB and 1,000 questions per import. Duplicate detection ignores case and repeated whitespace.</p>
+      <button class="btn btn-primary-cta mt-3" type="submit">Import CSV <span aria-hidden="true">↑</span></button>
+    </form>
+    <h2 class="schema-heading">Required CSV headers</h2>
+    <pre class="csv-schema">{{ csv_fields|join(',') }}
+"Where do creators find AI editing tools?","Editing","https://real-source.example/page","forum","US","en","unverified"</pre>
+    <p class="field-help">The sample row is illustrative only: replace its example question and URL with a real question and a source you personally verified. Do not mark the sample as verified.</p>
+  </section>
+</div>
+{% endblock %}

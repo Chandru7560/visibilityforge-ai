@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Page not found | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<section class="error-section">
+  <div class="container text-center">
+    <span class="section-kicker">404 · NOT FOUND</span>
+    <h1>That page isn't in view.</h1>
+    <p>The link may be outdated, or the page may have moved.</p>
+    <a class="btn btn-primary-cta mt-3" href="{{ url_for('main.index') }}">Back to home <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+{% endblock %}

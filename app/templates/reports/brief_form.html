@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Content Brief Generator | VisibilityForge AI{% endblock %}
+{% block content %}
+<div class="research-page">
+  <header class="research-header detail-header"><div><div class="section-kicker">REPORTING TOOLS · CONTENT BRIEF</div><h1>Generate a reusable content brief</h1><p>Creates a template-based brief saved to Content Studio; no LLM is used.</p></div><a class="btn btn-quiet" href="{{ url_for('reports.index') }}">Back to reports</a></header>
+  <div class="integration-notice"><strong>Evidence-first planning</strong><span>No supporting questions or internal URLs are invented. The generated brief includes explicit source requirements, schema guidance, and editorial checks.</span></div>
+  <section class="research-panel content-editor-panel">
+    <form method="post">{{ form.hidden_tag() }}
+      <div class="content-editor-grid">
+        {% for field in [form.target_query, form.search_intent, form.target_market, form.audience, form.supporting_questions, form.source_requirements, form.internal_links, form.schema_recommendation] %}
+        <div class="research-field {% if field.name in ['supporting_questions','source_requirements','internal_links'] %}field-wide{% endif %}">
+          {{ field.label(class="form-label") }}
+          {% if field.name in ['supporting_questions','source_requirements','internal_links'] %}{{ field(class="auth-input", rows="3") }}{% else %}{{ field(class="auth-input") }}{% endif %}
+          {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="form-actions">{{ form.submit(class="btn btn-primary-cta") }}</div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Read-only demo | VisibilityForge AI{% endblock %}
+
+{% block content %}
+<section class="demo-section">
+  <div class="container">
+    <header class="demo-header">
+      <div>
+        <span class="section-kicker">PUBLIC, READ-ONLY PREVIEW</span>
+        <h1>Visibility intelligence,<br><span class="gradient-text">from signal to action.</span></h1>
+        <p>Explore the product areas without signing in. This preview is static, uses illustrative examples only, and does not read workspace records or collect data from search and AI platforms.</p>
+      </div>
+      <a class="btn btn-secondary-cta" href="{{ url_for('main.index') }}">Back to home</a>
+    </header>
+
+    <aside class="demo-notice" role="note">
+      <strong>Illustrative preview — not customer data.</strong>
+      No measurements, citations, audits, or performance claims shown here are live or independently verified.
+    </aside>
+
+    <div class="demo-grid">
+      <article class="demo-card">
+        <span class="demo-card-label">01 · RESEARCH HUB</span>
+        <h2>Questions and evidence</h2>
+        <p>Organize audience questions and keep each observation tied to its source, market, engine, and evidence.</p>
+        <span class="demo-card-state">Evidence-led · manual recording</span>
+      </article>
+      <article class="demo-card">
+        <span class="demo-card-label">02 · TECHNICAL SEO</span>
+        <h2>Focused site audits</h2>
+        <p>Review crawl findings and recommendations for a site you are authorized to assess.</p>
+        <span class="demo-card-state">Scoped crawl · observed findings</span>
+      </article>
+      <article class="demo-card">
+        <span class="demo-card-label">03 · CONTENT STUDIO</span>
+        <h2>Draft and refine</h2>
+        <p>Prepare structured content drafts with metadata and implementation notes for human review.</p>
+        <span class="demo-card-state">Drafts · reviewer controlled</span>
+      </article>
+      <article class="demo-card">
+        <span class="demo-card-label">04 · CITATIONS</span>
+        <h2>Track source opportunities</h2>
+        <p>Record citation opportunities and their supporting evidence instead of treating estimates as outcomes.</p>
+        <span class="demo-card-state">Source-backed · no fabricated results</span>
+      </article>
+    </div>
+
+    <div class="demo-footer">
+      <p>Want to use the private workspace? Its research, audit, content, citation, and reporting actions remain protected by sign-in.</p>
+      <a class="btn btn-primary-cta" href="{{ url_for('auth.login') }}">Sign in to the workspace <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+{% endblock %}

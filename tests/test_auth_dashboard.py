@@ -51,6 +51,34 @@ def test_dashboard_requires_login(client):
     assert client.get("/auth/register").status_code == 404
 
 
+def test_public_demo_does_not_expose_workspace_data(client, app):
+    with app.app_context():
+        owner = create_user("private-owner@example.com")
+        db.session.add(
+            Question(
+                user_id=owner.id,
+                question_text="Private workspace question marker",
+                market="US",
+            )
+        )
+        db.session.commit()
+        app.config["OWNER_EMAIL"] = "private-contact@example.com"
+
+    demo = client.get("/demo")
+    landing = client.get("/")
+
+    assert demo.status_code == 200
+    assert b"PUBLIC, READ-ONLY PREVIEW" in demo.data
+    assert b"Illustrative preview" in demo.data
+    assert b"Private workspace question marker" not in demo.data
+    assert b"private-owner@example.com" not in demo.data
+    assert b"private-contact@example.com" not in demo.data
+    assert b"Explore the read-only demo" in landing.data
+    assert b"private-contact@example.com" not in landing.data
+    assert client.get("/dashboard/").status_code == 302
+    assert client.get("/research/").status_code == 302
+
+
 def test_admin_bootstrap_is_environment_configured_and_one_time(app):
     app.config["INITIAL_ADMIN_EMAIL"] = "owner@example.com"
     app.config["INITIAL_ADMIN_PASSWORD"] = "a-bootstrap-test-password"

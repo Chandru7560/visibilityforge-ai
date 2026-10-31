@@ -1,13 +1,13 @@
 # VisibilityForge AI
 
-VisibilityForge AI is a Flask AEO, SEO, and GEO visibility intelligence workspace. It includes a responsive landing page and authenticated, database-driven dashboard for recorded questions and measurements, technical audit issues, content pages, citation opportunities, activity, and 90-day tasks.
+VisibilityForge AI is a Flask AEO, SEO, and GEO visibility intelligence workspace. It includes a responsive landing page, a public static read-only demo, and an authenticated database-driven workspace for recorded questions and measurements, technical audit issues, content pages, citation opportunities, activity, and 90-day tasks.
 
 ## Architecture and technology
 
 - Python 3.11+ (the workspace test run uses Python 3.12.8), Flask application factory, Flask-Login, Flask-WTF/CSRF, Flask-SQLAlchemy, and Flask-Migrate/Alembic.
 - PostgreSQL with Psycopg 3 is required in production. Local development defaults to an instance-relative SQLite file; automated tests use isolated SQLite.
 - Server-rendered Jinja templates, Bootstrap 5 from jsDelivr, project-owned CSS/JavaScript, and Chart.js for database-backed dashboard charts.
-- Blueprints divide the application into public/health/auth, dashboard, research, technical audit, content, citations, and reports. Services contain the crawler, visibility calculations, question CSV handling, content drafting, measurement adapter interface, and report calculations.
+- Blueprints divide the application into public/health/auth, dashboard, research, technical audit, content, citations, and reports. The public `/demo` page uses static illustrative copy and does not read workspace records. Workspace pages and all write actions remain login-protected. Services contain the crawler, visibility calculations, question CSV handling, content drafting, measurement adapter interface, and report calculations.
 - Every user-owned query is scoped to the signed-in user. Forms use CSRF protection; response headers include a nonce-based Content Security Policy and browser security headers. Login failures use persistent, hashed email/IP rate-limit buckets in the database.
 - Migrations are committed and applied with Flask-Migrate. Review each migration for data impact; deployments must not use `db.create_all()`, schema resets, or destructive migration shortcuts.
 
@@ -70,6 +70,10 @@ python run.py
 ```
 
 Open <http://127.0.0.1:5000>. The health check is at <http://127.0.0.1:5000/health>; it runs a read-only database check and returns 503 when the database is unavailable.
+
+## Public read-only demo
+
+Open <http://127.0.0.1:5000/demo> to preview the product without an account. The page is static, contains only illustrative descriptions, and does not query the database or expose saved user records. It does not collect data from search engines or AI platforms. The database-backed dashboard and every research, audit, content, citation, and reporting workflow remain protected by authentication.
 
 ## Database setup and initial administrator
 
@@ -293,10 +297,10 @@ Store backup files outside the repository and verify they do not contain public 
 ## Current limitations and release checklist
 
 - [x] **Implemented and tested:** application factory, module routes/templates, tenant-scoped authentication/data access, CSRF, password hashing, persistent login throttling, safe error responses, response security headers, local migrations, data validation, and local file-database persistence across app instances.
-- [x] **Implemented and tested:** research/question and measurement workflows, CSV import/export, SSRF-hardened bounded technical audits, template/optional LLM content flow, citation planner, report calculations/exports, launch-plan editing, and local content-brief generation. Final local automated test result: 91 passed using `python -m pytest -q -W error::sqlalchemy.exc.SAWarning`. The suite reports WTForms tuple-choice deprecation warnings; there are no SQLAlchemy warnings.
-- [ ] **Implemented but not tested against a live service:** PostgreSQL operations/migrations, Render Blueprint execution, deployment health checks, paid-tier backup/restore, and public-browser responsive behavior. Local migration smoke tests use SQLite; no live PostgreSQL server or Render deployment was available in this workspace.
+- [x] **Implemented and tested:** research/question and measurement workflows, CSV import/export, SSRF-hardened bounded technical audits, template/optional LLM content flow, citation planner, report calculations/exports, launch-plan editing, local content-brief generation, and a public static read-only demo that does not read workspace data. Latest local automated test result: 95 passed; the suite reports 151 existing WTForms tuple-choice deprecation warnings.
+- [x] **Verified on Render:** the public Free-plan service and PostgreSQL are configured, and the deployed `/health` endpoint has returned HTTP 200. The latest source changes still require deployment verification. Live backup/restore and authenticated workflows have not been verified.
 - [ ] **Requires external credentials:** production `SECRET_KEY`, Render PostgreSQL connection, Render/GitHub account linkage, and optional `CONTENT_LLM_API_KEY`. The LLM route has a successful mocked protocol test, not a live provider request; a real API credential/provider test is still required before claiming provider availability.
 - [ ] **Requires manual evidence collection:** Google results/AI Overview and ChatGPT, Gemini, Perplexity, Claude, and Copilot measurements; verification of source and citation opportunities; authorized website audit consent; publication and external validation records. The application does not claim that a platform was queried unless an observation is entered.
 - [ ] **Not implemented:** automatic AI/search-engine data collection, Google Search Console or indexing verification, email delivery/account recovery, CMS publishing, external schema validation, built-in scheduled worker, automated third-party citation research, account registration, or in-app database backup/restore.
 
-**Release gate:** do not call this deployed or production-ready until a paid persistent Render Postgres/service plan is selected, deployment and migrations have been verified on Render, a live database backup/restore procedure is tested, the first administrator can sign in, and `/health` plus authenticated workflows are checked on the actual public URL. No public deployment has been performed or verified from this workspace.
+**Release status:** the existing public Render URL is <https://visibilityforge-ai.onrender.com>; the static read-only demo is at <https://visibilityforge-ai.onrender.com/demo>. These Free-plan URLs are suitable for a demo, not production data. Private workspace routes remain protected by sign-in, and an administrator account has not been verified. Do not claim authenticated workflows or production backup/restore readiness until they are tested on an appropriate paid plan.
